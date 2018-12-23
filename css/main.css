@@ -40,5 +40,18 @@ nav a img {
 #splash {
   background: #EBEDEC;
   min-height: 500px;
-  height: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+h1 {
+  margin: 0 15px;
+  background: url(../images/chronos_intrographic_Intro_Text.png);
+  width: 848px;
+  height: 380px;
+  background-size: 100%;
+  color: transparent;
+  background-repeat: no-repeat;
 }
