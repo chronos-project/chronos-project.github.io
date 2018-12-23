@@ -1,4 +1,12 @@
-@import url('https://fonts.googleapis.com/css?family=Cabin:400,500');
+@import url('https://fonts.googleapis.com/css?family=Cabin:400,500,700');
+
+main p {
+  font-family: 'Cabin', serif;
+  font-weight: 400;
+  font-size: 24px;
+  line-height: 30px;
+  margin-bottom: 20px;
+}
 
 nav {
   display: flex;
@@ -37,6 +45,7 @@ nav a img {
   width: 45px;
 }
 
+/* ==== Splash ==== */
 #splash {
   background: #EBEDEC;
   min-height: 500px;
@@ -54,4 +63,35 @@ h1 {
   background-size: 100%;
   color: transparent;
   background-repeat: no-repeat;
+}
+
+/* ==== Tracker ==== */
+#tracker {
+  background: #4C586F;
+  color: #FFF;
+  font-family: 'Cabin', sans-serif;
+  display: flex;
+  /* align-items: center; */
+}
+
+#tracker img {
+  width: 480px;
+  height: 392px;
+}
+
+.text-box {
+  width: 70%;
+}
+
+.box {
+  width: 50vw;
+  display: flex;
+  justify-content: center;
+  padding: 165px 0px;
+}
+
+h2 {
+  font-size: 60px;
+  font-weight: 400;
+  margin-bottom: 30px;
 }
