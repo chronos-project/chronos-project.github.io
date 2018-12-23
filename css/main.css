@@ -1,0 +1,44 @@
+@import url('https://fonts.googleapis.com/css?family=Cabin:400,500');
+
+nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #FFF;
+  padding: 10px 35px;
+}
+
+#header-logo {
+  width: 200px;
+}
+
+nav ul {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 22px;
+  font-family: 'Cabin', sans-serif;
+  font-weight: 400;
+  color: #363739;
+}
+
+nav li {
+  margin: 0 12px;
+}
+
+nav > a {
+  background: url(../images/logo/chronos_logotype.png);
+  min-width: 209px;
+  height: 32px;
+  background-size: cover;
+}
+
+nav a img {
+  width: 45px;
+}
+
+#splash {
+  background: #EBEDEC;
+  min-height: 500px;
+  height: 100vw;
+}
