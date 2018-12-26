@@ -5,7 +5,7 @@ main p {
   font-weight: 400;
   font-size: 24px;
   line-height: 30px;
-  margin-bottom: 20px;
+  margin-bottom: 80px;
 }
 
 nav {
@@ -88,6 +88,21 @@ h1 {
   display: flex;
   justify-content: center;
   padding: 165px 0px;
+}
+
+.button {
+  padding: 25px 50px;
+  background: #FFF;
+  color: #35363A;
+  text-transform: uppercase;
+  font-size: 24px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.button:hover {
+  background: #35363A;
+  color: #FFF;
 }
 
 h2 {
