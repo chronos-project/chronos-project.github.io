@@ -106,7 +106,29 @@ h1 {
 }
 
 h2 {
+  font-family: 'Cabin', serif;
   font-size: 60px;
   font-weight: 400;
   margin-bottom: 30px;
+}
+
+/* ==== Streaming Architecture ==== */
+#streaming {
+  display: flex;
+  background: #ebedec;
+}
+
+#streaming img {
+  width: 632px;
+  height: 238px;
+  margin-top: 36px;
+}
+
+#streaming .box {
+  padding: 95px 0;
+}
+
+/* ==== Databases ==== */
+#databases {
+  background: #FFF;
 }
