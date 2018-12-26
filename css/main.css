@@ -1,10 +1,12 @@
 @import url('https://fonts.googleapis.com/css?family=Cabin:400,500,700');
 
-main p {
-  font-family: 'Cabin', serif;
-  font-weight: 400;
-  font-size: 24px;
+main p,
+.button {
+  font: 400 24px 'Cabin', serif;
   line-height: 30px;
+}
+
+main p {
   margin-bottom: 80px;
 }
 
@@ -71,7 +73,6 @@ h1 {
   color: #FFF;
   font-family: 'Cabin', sans-serif;
   display: flex;
-  /* align-items: center; */
 }
 
 #tracker img {
@@ -115,7 +116,7 @@ h2 {
 /* ==== Streaming Architecture ==== */
 #streaming {
   display: flex;
-  background: #ebedec;
+  background: #EBEDEC;
 }
 
 #streaming img {
@@ -166,4 +167,23 @@ div.db-logo:last-of-type img {
   width: 312px;
   height: 275px;
   margin-bottom: 35px;
+}
+
+/* ==== About ==== */
+#about {
+  display: flex;
+}
+
+#about div.text-box {
+  width: 60%;
+}
+
+#about div.box:first-of-type {
+  background: #4C586F;
+  color: #FFF;
+}
+
+#about div.box:last-of-type {
+  background: #EBEDEC;
+  color: #36373B;
 }
