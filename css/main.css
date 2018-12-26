@@ -131,4 +131,39 @@ h2 {
 /* ==== Databases ==== */
 #databases {
   background: #FFF;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#logos {
+  display: flex;
+  justify-content: center;
+}
+
+#databases > div:first-of-type {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 110px;
+}
+
+.db-logo {
+  width: 40%;
+  text-align: center;
+  padding: 0 50px;
+}
+
+.db-logo img {
+  margin-bottom: 30px;
+}
+
+div.db-logo:first-of-type img {
+  width: 285px;
+}
+
+div.db-logo:last-of-type img {
+  width: 312px;
+  height: 275px;
+  margin-bottom: 35px;
 }
