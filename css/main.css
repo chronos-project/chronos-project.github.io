@@ -1,6 +1,7 @@
 @import url('https://fonts.googleapis.com/css?family=Cabin:400,500,700');
 
 main p,
+footer p,
 .button {
   font: 400 24px 'Cabin', serif;
   line-height: 30px;
@@ -174,7 +175,21 @@ div.db-logo:last-of-type img {
   display: flex;
 }
 
-#about div.text-box {
+#about p {
+  font-size: 28px;
+  line-height: 34px;
+}
+
+#about h2 {
+  font-size: 70px;
+}
+
+#about .box {
+  padding-top: 105px;
+  padding-bottom: 155px;
+}
+
+#about div.box:first-of-type .text-box {
   width: 60%;
 }
 
@@ -186,4 +201,22 @@ div.db-logo:last-of-type img {
 #about div.box:last-of-type {
   background: #EBEDEC;
   color: #36373B;
+}
+
+/* ==== Footer ==== */
+footer {
+  background: #36373B;
+  color: #FEFEFE;
+  text-align: center;
+}
+
+footer p:first-of-type {
+  color: #EBEDEC;
+  font-size: 22px;
+  padding-top: 40px;
+}
+
+footer p:last-of-type {
+  padding-top: 20px;
+  padding-bottom: 40px;
 }
