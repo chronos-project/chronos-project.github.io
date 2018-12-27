@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="css/casestudy.css">
     <link rel="shortcut icon" type="image/png" href="/favicon.png" />
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/waypoints@4.0.1/lib/noframework.waypoints.min.js"></script>
+    <script src="javascripts/csWaypoints.js"></script>
   </head>
   <body>
     <nav>
@@ -19,11 +21,14 @@
       </ul>
     </nav>
     <main>
-      <nav>
+      <nav id="toc">
         <ul>
-          <li>Introduction</li>
-          <li>What is Event Data?</li>
-            <li>Event Data vs Entity Data</li>
+          <li class="h2 active" id="introduction-toc" data-element="introduction"><a href="#introduction">Introduction</a></li>
+          <li class="h2" id="what-is-event-data-toc" data-element="what-is-event-data-"><a href="#what-is-event-data-">What is Event Data?</a>
+            <ul>
+              <li class="h3">Event Data vs Entity Data</li>
+            </ul>
+          </li>
         </ul>
       </nav>
       <article>
@@ -31,6 +36,14 @@
           <h1 id="case-study">Case Study</h1>
           <h2 id="introduction">Introduction</h2>
           <p>Chronos is an event-capturing framework for greenfield applications, and is built using NodeJS, Apache Kafka, TimescaleDB, and PipelineDB. It allows developers to easily capture and store user events on the client side to then perform data exploration in order to aid business logic. By using Apache Kafka, Chronos is a streaming system at its core and is thus easily expandable to the developer&#39;s needs. Further, Chronos is deployed using Docker and comes with a CLI that abstracts the difficulties in installing and running the system.</p>
+          <h2 id="what-is-event-data-">What is Event Data?</h2>
+          <h3 id="event-data-vs-entity-data">Event Data vs Entity Data</h3>
+          <p>Very often, when we speak of &quot;data&quot; in an application, we generally tend to think of data that resides in a databases that is modeled after real world entities. This may be a shopping cart, a bank account, a character in an online video game, etc. In each of these cases, we are dealing with <strong>entity data</strong>, or data that describes the current state of some entity. This type of data is generally what comes to mind when we think of SQL and Relational Databases.</p>
+          <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+          <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+          <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+          <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+          <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
         </div>
       </article>
     </main>
