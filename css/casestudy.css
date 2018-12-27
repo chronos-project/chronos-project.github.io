@@ -1,0 +1,102 @@
+@import url('https://fonts.googleapis.com/css?family=Cabin:400,500,700');
+
+p,
+h1,
+h2,
+.button {
+  font: 400 28px 'Cabin', serif;
+  line-height: 34px;
+}
+
+/* ==== Top Navbar ==== */
+
+body > nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #EBEDEC;
+  padding: 10px 35px;
+}
+
+#header-logo {
+  width: 200px;
+}
+
+body > nav ul {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 22px;
+  font-family: 'Cabin', sans-serif;
+  font-weight: 400;
+  color: #363739;
+}
+
+body > nav li {
+  margin: 0 12px;
+}
+
+body > nav > a {
+  background: url(../images/logo/chronos_logotype.png);
+  min-width: 209px;
+  height: 32px;
+  background-size: cover;
+}
+
+body > nav a img {
+  width: 45px;
+}
+
+/* ==== Case Study ==== */
+main {
+  display: flex;
+}
+
+main nav {
+  width: 26vw;
+}
+
+article {
+  width: 74vw;
+}
+
+article h1 {
+  text-transform: uppercase;
+  font-size: 72px;
+  font-weight: 700;
+  color: #D6CBC9;
+  padding: 115px 0 85px 0;
+}
+
+article h2 {
+  font-size: 48px;
+  margin-bottom: 22px;
+}
+
+article div {
+  width: 85%;
+}
+
+main p {
+  margin-bottom: 80px;
+  font-size: 22px;
+  line-height: 30px;
+}
+
+/* ==== Footer ==== */
+footer {
+  background: #36373B;
+  color: #FEFEFE;
+  text-align: center;
+}
+
+footer p:first-of-type {
+  color: #EBEDEC;
+  font-size: 22px;
+  padding-top: 40px;
+}
+
+footer p:last-of-type {
+  padding-top: 20px;
+  padding-bottom: 40px;
+}
