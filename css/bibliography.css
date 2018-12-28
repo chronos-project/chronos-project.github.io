@@ -246,3 +246,7 @@ footer p:last-of-type {
     text-align: center;
   }
 }
+
+@media screen and (max-width: 525px) {
+  article h1 { font-size: 60px; }
+}
