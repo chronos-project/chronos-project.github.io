@@ -1,11 +1,63 @@
-<!DOCTYPE HTML>
+<!DOCTYPE html>
 <html lang="en-US">
   <head>
-    <title>Chronos: Bibliography</title>
+    <title>Chronos: Case Bibliography</title>
     <meta charset="utf-8" />
+    <link rel="stylesheet" href="css/reset.css">
+    <link rel="stylesheet" href="css/bibliography.css">
     <link rel="shortcut icon" type="image/png" href="/favicon.png" />
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/waypoints@4.0.1/lib/noframework.waypoints.min.js"></script>
+    <script src="javascripts/bibWaypoints.js"></script>
   </head>
-  <main>
-
-  </main>
+  <body>
+    <nav>
+      <a href="index.html"></a>
+      <ul>
+        <li><a href="casestudy.html" class="hvr-float-shadow">Case Study</a></li>
+        <li><a href="bibliography.html" class="hvr-float-shadow">Bibliography</a></li>
+        <li><a href="team.html" class="hvr-float-shadow">Team</a></li>
+        <li><a href="https://github.com/chronos-project" class="hvr-float-shadow"><img src="images/icons/chronos_github_gray.png" alt="Github logo" /></a></li>
+      </ul>
+    </nav>
+    <main>
+      <nav id="toc">
+        <ul>
+          <li class="h2 active" id="devops-toc" data-element="devops">DevOps
+            <ul>
+              <li class="h3" id="devops-blog-posts-toc" data-element="devops-blog-posts">Blog Posts</li>
+            </ul>
+          </li>
+          <li class="h2" id="docker-toc" data-element="docker">Docker
+            <ul>
+              <li class="h3" id="docker-blog-posts-toc" data-element="docker-blog-posts">Blog Posts</li>
+              <li class="h3" id="docker-courses-toc" data-element="docker-courses">Courses</li>
+              <li class="h3" id="docker-videos-toc" data-element="docker-videos">Videos</li>
+            </ul>
+          </li>
+        </ul>
+      </nav>
+      <article>
+        <div id='markdown'>
+          <h1 id="bibliography">Bibliography</h1>
+          <h2 id="devops">DevOps</h2>
+          <h3 id="devops-blog-posts">Blog Posts</h3>
+          <p><a href="https://blog.gruntwork.io/5-lessons-learned-from-writing-over-300-000-lines-of-infrastructure-code-36ba7fadeac1">5 Lessons Learned From Writing Over 300,000 Lines of Infrastructure Code: A concise masterclass on how to write infrastructure code</a> (Yevgeniy Brikman)</p>
+          <h2 id="docker">Docker</h2>
+          <p><em>Note: Many of these resources were shared with us by the <a href="https://spacecraft-repl.com/">SpaceCraft REPL team</a>. A hat tip to them!</em></p>
+          <h3 id="docker-blog-posts">Blog Posts</h3>
+          <p><a href="https://medium.com/@deeksha.sharma25/import-sql-dump-in-postgres-docker-container-in-10-min-ca16d9264f86">Import SQL dump in postgres docker container in 10 min</a> (Deeksha Sharma)</p>
+          <h3 id="docker-courses">Courses</h3>
+          <p><a href="https://www.udemy.com/docker-and-kubernetes-the-complete-guide/learn/v4/overview">Docker and Kubernetes: The Complete Guide</a> (Stephen Grider)</p>
+          <h3 id="docker-videos">Videos</h3>
+          <p><a href="https://www.youtube.com/watch?v=TvnZTi_gaNc">Virtual Machines vs Docker Containers - Dive Into Docker</a> (Nick Janetakis)</p>
+          <p>Succinct and clear explanation; analogy at the end is quite useful</p>
+        </div>
+      </article>
+    </main>
+    <footer>
+      <p>Current Version: 0.9.0</p>
+      <p><a href="casestudy.html" class="hvr-float-shadow">Case Study</a> | <a href="bibliography.html" class="hvr-float-shadow">Bibliography</a> | <a href="team.html" class="hvr-float-shadow">Team</a></p>
+    </footer>
+  </body>
 </html>
