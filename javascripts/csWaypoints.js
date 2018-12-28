@@ -14,9 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const titles = document.querySelectorAll('#toc li.h2');
 
   document.querySelector('#toc').addEventListener('click', (event) => {
-    event.preventDefault();
-
-    const li = event.target.parentNode;
+    const li = event.target;
     const data = li.dataset.element;
     const title = document.getElementById(data);
 

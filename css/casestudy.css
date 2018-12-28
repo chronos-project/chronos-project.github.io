@@ -89,6 +89,7 @@ body > nav a img {
 
 #toc li {
   font-family: 'Raleway', sans-serif;
+  cursor: pointer;
 }
 
 #toc li.h2 {
@@ -134,6 +135,13 @@ article h1 {
 article h2 {
   font-size: 48px;
   margin-bottom: 22px;
+}
+
+article h3 {
+  font-size: 36px;
+  font-family: 'Cabin', sans-serif;
+  color: #4C5870;
+  margin-bottom: 20px;
 }
 
 article div {
