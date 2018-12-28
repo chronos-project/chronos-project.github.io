@@ -2,11 +2,6 @@
 @import url('reset.css');
 @import url('effects.css');
 
-html,
-body {
-  overflow-x: hidden;
-}
-
 p,
 h1,
 h2,
