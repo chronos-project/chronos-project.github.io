@@ -206,3 +206,7 @@ footer p:last-of-type {
 @media screen and (max-width: 525px) {
   article h1 { font-size: 60px; }
 }
+
+@media screen and (max-width: 400px) {
+  article h1 { font-size: 43px; }
+}
