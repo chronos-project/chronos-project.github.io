@@ -84,7 +84,7 @@ body > nav a img {
 }
 
 #toc > ul {
-  width: 80%;
+  width: 90%;
 }
 
 #toc li {
@@ -174,4 +174,40 @@ footer p:first-of-type {
 footer p:last-of-type {
   padding-top: 20px;
   padding-bottom: 40px;
+}
+
+/* ==== Media Queries ==== */
+@media screen and (max-width: 1001px) {
+  #toc li.h2 {
+    margin-left: 40px;
+  }
+}
+
+@media screen and (max-width: 831px) {
+  #toc li.h2 {
+    margin-left: 10px;
+  }
+}
+
+@media screen and (max-width: 690px) {
+  body > nav {
+    display: none;
+  }
+
+  #toc {
+    display: none;
+  }
+
+  article {
+    width: 100vw;
+  }
+
+  #markdown {
+    width: 90%;
+    margin: 0 auto;
+  }
+
+  article h1 {
+    text-align: center;
+  }
 }
