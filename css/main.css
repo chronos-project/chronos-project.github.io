@@ -2,6 +2,11 @@
 @import url('reset.css');
 @import url('effects.css');
 
+html,
+body {
+  overflow-x: hidden;
+}
+
 main p,
 footer p,
 .button {
