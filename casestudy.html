@@ -83,6 +83,24 @@
               </tr>
             </tbody>
           </table>
+          <p>However, there is an emerging realization that while we genreally tend to think of applications as tracking entity data, that within an application there is always a constant stream of events that are taking place. An <strong>event</strong> in this case is any action that occurs in an application, such as a user clicking on a link, submitting a payment, creating a character, landing on a page, etc.</p>
+          <pre>
+          <code class="language-json">
+{
+  <span class="json-key">"eventType"</span>: <span class="json-value-string">“pageview”</span>,
+  <span class="json-key">"timestamp"</span>: <span class="hljs-string">"2018 20:29:48 GMT-0600"</span>,
+  <span class="hljs-string">"page URL"</span>: <span class="hljs-string">"www.example.com"</span>,
+  <span class="hljs-string">"pageTitle"</span>: <span class="hljs-string">"Example Title"</span>,
+  <span class="hljs-string">"user"</span>: {
+    “<span class="hljs-keyword">user</span>Id”: “<span class="hljs-number">7689476946</span>”,
+     “<span class="hljs-keyword">user</span>Country”: “USA”,
+     “<span class="hljs-keyword">user</span>Language”: “en-us”,
+     “<span class="hljs-keyword">user</span>Agent”: “Chrome”,
+     ...
+}
+          </code>
+          </pre>
+          <p><em>Example of a <code>pageview</code> event as a JSON object</em></p>
         </div>
       </article>
     </main>

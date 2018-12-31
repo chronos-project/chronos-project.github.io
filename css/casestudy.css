@@ -139,6 +139,7 @@ table {
   font-size: 22px;
   border-collapse: separate;
   border-radius: 10px;
+  margin: 0 auto;
 }
 
 thead {
@@ -151,19 +152,46 @@ th {
   width: 50%;
 }
 
-td {
-  padding: 5px 10px;
-}
+td { padding: 5px 10px; }
 
 tbody tr:nth-child(even) { background: #EBEDEC; }
 tbody tr:nth-child(odd) { background: #FEFEFE; }
 
-table { box-shadow: 3px 6px 10px #36373B; }
+table,
+pre { box-shadow: 3px 6px 10px #A7A7A7; }
 
 tr:first-child th:first-child { border-top-left-radius: 10px; }
 tr:first-child th:last-child { border-top-right-radius: 10px; }
 tr:last-child td:first-child { border-bottom-left-radius: 10px; }
 tr:last-child td:last-child { border-bottom-right-radius: 10px; }
+
+/* ==== Code Block ==== */
+pre {
+  background: #303133;
+  border-radius: 10px;
+  color: #C5CCC6;
+  display: inline-block;
+  margin-left: 50%;
+  transform: translateX(-50%);
+}
+
+code {
+  font-family: monaco, monospace;
+}
+
+code[class*="language"] {
+  display: block;
+  line-height: 20px;
+  margin: 10px 30px -3px 30px;
+}
+
+.json-key {
+  color: #DF5763;
+}
+
+.json-value-string {
+  color: #9CE469;
+}
 
 /* ==== Footer ==== */
 footer {
