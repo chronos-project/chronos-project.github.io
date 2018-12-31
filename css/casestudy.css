@@ -6,6 +6,8 @@ p,
 h1,
 h2,
 table,
+ol,
+article ul,
 .button {
   font: 400 28px 'Cabin', serif;
   line-height: 34px;
@@ -88,6 +90,7 @@ body > nav a img {
 #toc li.h3 {
   font-size: 18px;
   margin-left: 45px;
+  margin-bottom: 5px;
 }
 
 /* ==== Case Study ==== */
@@ -124,14 +127,34 @@ article div {
   width: 85%;
 }
 
+article a { color: #69C; }
+
 p + h2 {
   margin-top: 80px;
 }
 
+main p,
+pre,
+ol,
+article ul { margin-bottom: 30px; }
+
+main p,
+ol,
+article ul { font-size: 22px; }
+
 main p {
-  margin-bottom: 30px;
-  font-size: 22px;
   line-height: 30px;
+}
+
+ol,
+article ul { padding-left: 50px; }
+
+ol { list-style: decimal; }
+article ul { list-style: disc; }
+
+.caption {
+  font-style: italic;
+  text-align: center;
 }
 
 /* ==== Table ==== */
@@ -139,7 +162,7 @@ table {
   font-size: 22px;
   border-collapse: separate;
   border-radius: 10px;
-  margin: 0 auto;
+  margin: 0 auto 30px auto;
 }
 
 thead {
@@ -185,13 +208,9 @@ code[class*="language"] {
   margin: 10px 30px -3px 30px;
 }
 
-.json-key {
-  color: #DF5763;
-}
-
-.json-value-string {
-  color: #9CE469;
-}
+.json-key { color: #DF5763; }
+.json-value-string { color: #9CE469; }
+.json-value-number { color: #FFAB40; }
 
 /* ==== Footer ==== */
 footer {

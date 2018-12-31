@@ -38,10 +38,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let w2 = new Waypoint({
     element: document.getElementById('what-is-event-data-'),
-    handler: () => {
+    handler: (direction) => {
       removeActive(titles);
+      let tocReference;
 
-      const tocReference = document.getElementById('what-is-event-data-toc');
+      if (direction === 'down') {
+        tocReference = document.getElementById('what-is-event-data-toc');
+      } else {
+        tocReference = document.getElementById('introduction-toc');
+      }
+
+      addActive(tocReference);
+    },
+  });
+
+  let w3 = new Waypoint({
+    element: document.getElementById('existing-solutions'),
+    handler: (direction) => {
+      removeActive(titles);
+      let tocReference;
+
+      if (direction === 'down') {
+        tocReference = document.getElementById('existing-solutions-toc');
+      } else {
+        tocReference = document.getElementById('what-is-event-data-toc');
+      }
+
       addActive(tocReference);
     },
   });
