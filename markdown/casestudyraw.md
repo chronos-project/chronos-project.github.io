@@ -1,55 +1,49 @@
-# Case Study
-## Introduction
-Chronos is an event-capturing framework for greenfield applications, and is built using NodeJS, Apache Kafka, TimescaleDB, and PipelineDB. It allows developers to easily capture and store user events on the client side to then perform data exploration in order to aid business logic. By using Apache Kafka, Chronos is a streaming system at its core and is thus easily expandable to the developer's needs. Further, Chronos is deployed using Docker and comes with a CLI that abstracts the difficulties in installing and running the system.
+## Existing Solutions
+Luckily, there are already existing solutions for a developer who wishes to capture, store, and analyze event data. However, many of these solutions are proprietary in nature and while they could be used for greenfield applications, they are better suited for larger or enterprise level applications. With these solutions we generally found the following problems:
+1. Monetary costs
+2. Data lives on the proprietary service's servers
+3. Data may be sampled
+4. You may not have access to your raw data
+5. Manual implementation of events to capture
 
-When building Chronos we faced several difficulties. The first were the various challenges in sending event data to the API server including limited browser resources, security concerns, and payload size limitations. Second was the issue of code coupling, or making sure that Chronos could easily be expanded to fit a developers needs. Third, we had to overcome the difficulties with abstracting away any difficulties for the developer when working with Apache Kafka, including installation, configuration, and potential errors. Lastly, we had to overcome the difficulties in storing event data while still making data exploration possible for a large range of developers.
+The justifications of these drawbacks should be straightforward:
+1. Since greenfield applications are usually in a prototype or new phase, they likely don't have or want to spend a lot of money on proprietary solutions
+2. With the growing concern about how people's data is being used, it's always a gamble to have your data hosted on a service's server that you don't have direct access to
+3. Same problem as \#2
+4. If you can only access data through an API and can never get at the raw data itself, not only does that limit what you can do with the data, but it makes it hard if not impossible to transfer it to another solution
+5. Since a greenfield application doesn't yet know what events to capture, requiring manual implementation of event capturing is counter-intuitive
 
-This case study will begin by describing what event data is and how it contrasts from entity data. Next, we will define what a greenfield application is and review some of the existing solutions for this area, and what some problems there are in using these systems. Lastly, we will describe how we went about building Chronos in order to solve these problems and how we overcame the challenges that presented themselves along the way.
+Of the various solutions, there were three that we found in particular better suited our use case: Yandex Metrica, Event Hub, and Countly Community Edition.
 
-## What is Event Data?
-### Event Data vs Entity Data
-Very often, when we speak of "data" in an application, we generally tend to think of data that resides in a databases that is modeled after real world entities. This may be a shopping cart, a bank account, a character in an online video game, etc. In each of these cases, we are dealing with **entity data**, or data that describes the current state of some entity. This type of data is generally what comes to mind when we think of SQL and Relational Databases.
+### Yandex Metrica
+One existing solution is provided by [Yandex Metrica](https://metrica.yandex.com/about?), which is a product of the larger [Yandex](https://yandex.com/) company. Two of the standout advantages of Yandex Metrica is that they provide the ability to create "click maps", visual representations on a web page where a user clicked through, as well as heat maps that show which sections of your pages have the most activity. Yandex also has no fee associated with it.
 
-Column Name | Value
---- | ---
-id | 327
-account_name | Bugman27
-email | imabug@foo.bar
-account_status | active
-name | Franz Kafka
-age | 53
-_Typical example of entity data_
+While Yandex does require your data to live on their servers, they are required to respect European data privacy laws and also encrypt your data so it can't be used by other analytical services. Further, any data they look at for their own analytical purposes is done so in a way that your data remains anonymous.
 
-However, there is an emerging realization that while we genreally tend to think of applications as tracking entity data, that within an application there is always a constant stream of events that are taking place. An **event** in this case is any action that occurs in an application, such as a user clicking on a link, submitting a payment, creating a character, landing on a page, etc.
+One big drawback is that Yandex requires most event capturing to be manually implemented. Another problem is that while you do have access to your raw data, you can only access via their API, and so you have to extract and store your data manually.
 
-```json
-{
-  “eventType”: “pageview”,
-  "timestamp": "2018 20:29:48 GMT-0600",
-  "page URL": "www.example.com",
-  "pageTitle": "Example Title",
-  "user": {
-    “userId”: “7689476946”,
-     “userCountry”: “USA”,
-     “userLanguage”: “en-us”,
-     “userAgent”: “Chrome”,
-     ...
-}
-```
-_Example of a `pageview` event as a JSON object_
+### EventHub
+Another solution for Greenfield applications is [EventHub](https://github.com/Codecademy/EventHub), which is an open source event tracking/storage system written in Java. It has some impressive analytical capabilities such as cohort and funneling queries, but it has little-to-no automatic tracking of events.
 
-As such, **event data** is data that models each of these events. Unlike entity data which is core to the business logic of an application, event data is a kind of metadata, or data about data, which describes how an application is being used, and is usually not central to its business logic. In this case, if entity data is a noun which carries around state, then event data is a verb which describes an action.
+Two other drawbacks of EventHub are that it's timestamp is processing time only (i.e. it logs the timestamp when the data hits the server as opposed to when it occurs in the client). This is mitigated by the fact that any event capturing a developer implements can just include a client-side timestamp. However, the largest issue is that the project has been abandoned for 5 years now, so support would likely be totally absent.
 
-Since entity data describes how an application is being used, capturing and analyzing this data provides a major competitive advantage since it can be used to positively iterate on a product and increase profits.\[1] However, if a developer wants to track event data, then unlike entity data, all the events would have to be stored since it is with the total set of events that one can analyze the data and draw conclusions. In other words, events are treated as immutable and are never updated and rarely deleted. The following table maps out the differences in this model between event and entity data thus far:\[2]
+### Countly Community Edition
+Of the three choices, [Countly's community edition](https://github.com/Countly/countly-server) (open source) was the strongest option. Countly allows not only for a quick manual setup on your own server, but also provides a one-click setup option for hosting your server on Digital Ocean. Their tracker is a JavaScrpit SDK that tracks the following events automatically:
+* sessions
+* pageviews (both for tradition websites and single page applications)
+* link clicks (both on a link or those on a parent node)
+* form submissions
 
-| Entity Data | Event Data |
-| -------- | -------- |
-| Strict schema | Felxible schema |
-| Normalized | Denormalized |
-| Shorter | Wider |
-| Describes nouns | Describes verbs|
-| Describes now | Describes trends over time |
-| Updates | Appends |
-|O(N) | O(N * K) |
+Two other events, mouse clicks and mouse scrolls, are only automatically captured in the enterprise edition. Since Countly must be ran on a server you own, you have access to all of your own data (which is stored in MongoDB), and they also provide a UI for visualizing and exploring your data.
 
-While this is a good first attempt to model events, the key problem with ending here is that while there is definitely a legitimate distinction between event data and entity data, the two cannot be completely partitioned into unrelated categories. To understand why this is, we need to discuss the "theory of streams and tables" as concevied of by figures such as Martin Kleppmann, Jay Kreps, and Tyler Akidau.
+The largest drawbacks to Countly are the limited number of events captured (anything else must be implemented manually) and that their pipeline setup is a direct connection from their API to their database (this is also true of EventHub). Why this latter design is problematic will be discussed below.
+
+### Chronos
+For Chronos to be an alternative in this space, it must solve the problems listed above as well as provide some benefits compared to the existing solutions. In the end, Chronos was able solve the 5 problems above:
+1. Chronos is open source, and thus free to use
+2. Data only exists on the server you host Chronos on and so you don't have to fear its security
+3. Chronos will never sample your data since it's just an infrastructure
+4. Chronos provides access to your raw data
+5. Chronos provides a config file that specifies which events you'd like to capture: everything else is automated
+
+In addition to this, we provided a way for Chronos to visualize any queries over the data. We also wanted to make sure that Chronos would be space efficient since a greenfield application shouldn't be spending lots of money on their own server to collect data. Below we detail how we went about building Chronos and the challenges we faced.
