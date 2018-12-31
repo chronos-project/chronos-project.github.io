@@ -5,3 +5,13 @@ Chronos is an event-capturing framework for greenfield applications, and is buil
 ## What is Event Data?
 ### Event Data vs Entity Data
 Very often, when we speak of "data" in an application, we generally tend to think of data that resides in a databases that is modeled after real world entities. This may be a shopping cart, a bank account, a character in an online video game, etc. In each of these cases, we are dealing with **entity data**, or data that describes the current state of some entity. This type of data is generally what comes to mind when we think of SQL and Relational Databases.
+
+| Entity Data | Event Data |
+| -------- | -------- |
+| Strict schema | Felxible schema |
+| Normalized | Denormalized |
+| Shorter | Wider |
+| Describes nouns | Describes verbs|
+| Describes now | Describes trends over time |
+| Updates | Appends |
+|O(N) | O(N * K) |

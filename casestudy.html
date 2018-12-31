@@ -34,7 +34,9 @@
         <div id='markdown'>
           <h1 id="case-study">Case Study</h1>
           <h2 id="introduction">Introduction</h2>
-          <p>Chronos is an event-capturing framework for greenfield applications, and is built using NodeJS, Apache Kafka, TimescaleDB, and PipelineDB. It allows developers to easily capture and store user events on the client side to then perform data exploration in order to aid business logic. By using Apache Kafka, Chronos is a streaming system at its core and is thus easily expandable to the developer&#39;s needs. Further, Chronos is deployed using Docker and comes with a CLI that abstracts the difficulties in installing and running the system.</p>
+          <p>Chronos is an event-capturing framework for greenfield applications, and is built using NodeJS, Apache Kafka, TimescaleDB, and PipelineDB. It allows developers to easily capture and store user events on the client side to then perform data exploration in order to aid business logic. By using Apache Kafka, Chronos is a streaming system at its core and is thus easily expandable to the developer's needs. Further, Chronos is deployed using Docker and comes with a CLI that abstracts the difficulties in installing and running the system.</p>
+          <p>When building Chronos we faced several difficulties. The first were the various challenges in sending event data to the API server including limited browser resources, security concerns, and payload size limitations. Second was the issue of code coupling, or making sure that Chronos could easily be expanded to fit a developers needs. Third, we had to overcome the difficulties with abstracting away any difficulties for the developer when working with Apache Kafka, including installation, configuration, and potential errors. Lastly, we had to overcome the difficulties in storing event data while still making data exploration possible for a large range of developers.</p>
+          <p>This case study will begin by describing what event data is and how it contrasts from entity data. Next, we will define what a greenfield application is and review some of the existing solutions for this area, and what some problems there are in using these systems. Lastly, we will describe how we went about building Chronos in order to solve these problems and how we overcame the challenges that presented themselves along the way.</p>
           <h2 id="what-is-event-data-">What is Event Data?</h2>
           <h3 id="event-data-vs-entity-data">Event Data vs Entity Data</h3>
           <p>Very often, when we speak of &quot;data&quot; in an application, we generally tend to think of data that resides in a databases that is modeled after real world entities. This may be a shopping cart, a bank account, a character in an online video game, etc. In each of these cases, we are dealing with <strong>entity data</strong>, or data that describes the current state of some entity. This type of data is generally what comes to mind when we think of SQL and Relational Databases.</p>
@@ -43,6 +45,44 @@
           <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
           <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
           <p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Entity Data</th>
+                <th>Event Data</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Strict schema</td>
+                <td>Felxible schema</td>
+              </tr>
+              <tr>
+                <td>Normalized</td>
+                <td>Denormalized</td>
+              </tr>
+              <tr>
+                <td>Shorter</td>
+                <td>Wider</td>
+              </tr>
+              <tr>
+                <td>Describes nouns</td>
+                <td>Describes verbs</td>
+              </tr>
+              <tr>
+                <td>Describes now</td>
+                <td>Describes trends over time</td>
+              </tr>
+              <tr>
+                <td>Updates</td>
+                <td>Appends</td>
+              </tr>
+              <tr>
+                <td>O(N)</td>
+                <td>O(N * K)</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </article>
     </main>
