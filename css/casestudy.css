@@ -161,6 +161,8 @@ article ul { list-style: disc; }
   text-align: center;
 }
 
+i { font-style: italic; }
+
 article p > code {
   background: #D6CBC9;
   padding: 2px;

@@ -99,4 +99,20 @@ document.addEventListener('DOMContentLoaded', () => {
       addActive(tocReference);
     },
   });
+
+  let w6 = new Waypoint({
+    element: document.getElementById('apache-kafka'),
+    handler: (direction) => {
+      removeActive(titles);
+      let tocReference;
+
+      if (direction === 'down') {
+        tocReference = document.getElementById('apache-kafka-toc');
+      } else {
+        tocReference = document.getElementById('api-server-toc');
+      }
+
+      addActive(tocReference);
+    },
+  });
 })
