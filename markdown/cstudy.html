@@ -1,45 +1,65 @@
-<h2 id="existing-solutions">Existing Solutions</h2>
-<p>Luckily, there are already existing solutions for a developer who wishes to capture, store, and analyze event data. However, many of these solutions are proprietary in nature and while they could be used for greenfield applications, they are better suited for larger or enterprise level applications. With these solutions we generally found the following problems:</p>
-<ol>
-<li>Monetary costs</li>
-<li>Data lives on the proprietary service&#39;s servers</li>
-<li>Data may be sampled</li>
-<li>You may not have access to your raw data</li>
-<li>Manual implementation of events to capture</li>
-</ol>
-<p>The justifications of these drawbacks should be straightforward:</p>
-<ol>
-<li>Since greenfield applications are usually in a prototype or new phase, they likely don&#39;t have or want to spend a lot of money on proprietary solutions</li>
-<li>With the growing concern about how people&#39;s data is being used, it&#39;s always a gamble to have your data hosted on a service&#39;s server that you don&#39;t have direct access to</li>
-<li>Same problem as #2</li>
-<li>If you can only access data through an API and can never get at the raw data itself, not only does that limit what you can do with the data, but it makes it hard if not impossible to transfer it to another solution</li>
-<li>Since a greenfield application doesn&#39;t yet know what events to capture, requiring manual implementation of event capturing is counter-intuitive</li>
-</ol>
-<p>Of the various solutions, there were three that we found in particular better suited our use case: Yandex Metrica, Event Hub, and Countly Community Edition.</p>
-<h3 id="yandex-metrica">Yandex Metrica</h3>
-<p>One existing solution is provided by <a href="https://metrica.yandex.com/about?">Yandex Metrica</a>, which is a product of the larger <a href="https://yandex.com/">Yandex</a> company. Two of the standout advantages of Yandex Metrica is that they provide the ability to create &quot;click maps&quot;, visual representations on a web page where a user clicked through, as well as heat maps that show which sections of your pages have the most activity. Yandex also has no fee associated with it.</p>
-<p>While Yandex does require your data to live on their servers, they are required to respect European data privacy laws and also encrypt your data so it can&#39;t be used by other analytical services. Further, any data they look at for their own analytical purposes is done so in a way that your data remains anonymous.</p>
-<p>One big drawback is that Yandex requires most event capturing to be manually implemented. Another problem is that while you do have access to your raw data, you can only access via their API, and so you have to extract and store your data manually.</p>
-<h3 id="eventhub">EventHub</h3>
-<p>Another solution for Greenfield applications is <a href="https://github.com/Codecademy/EventHub">EventHub</a>, which is an open source event tracking/storage system written in Java. It has some impressive analytical capabilities such as cohort and funneling queries, but it has little-to-no automatic tracking of events.</p>
-<p>Two other drawbacks of EventHub are that it&#39;s timestamp is processing time only (i.e. it logs the timestamp when the data hits the server as opposed to when it occurs in the client). This is mitigated by the fact that any event capturing a developer implements can just include a client-side timestamp. However, the largest issue is that the project has been abandoned for 5 years now, so support would likely be totally absent.</p>
-<h3 id="countly-community-edition">Countly Community Edition</h3>
-<p>Of the three choices, <a href="https://github.com/Countly/countly-server">Countly&#39;s community edition</a> (open source) was the strongest option. Countly allows not only for a quick manual setup on your own server, but also provides a one-click setup option for hosting your server on Digital Ocean. Their tracker is a JavaScrpit SDK that tracks the following events automatically:</p>
+<h2 id="capturing-events">Capturing Events</h2>
+<p>Chronos captures events on the client side by using a <code>tracker.js</code> file. The tracker itself is compiled from multiple files by using Browserify and automates the capturing of the following events:</p>
 <ul>
-<li>sessions</li>
-<li>pageviews (both for tradition websites and single page applications)</li>
-<li>link clicks (both on a link or those on a parent node)</li>
+<li>pageviews</li>
+<li>mouse movements</li>
+<li>mouse clicks</li>
+<li>link clicks</li>
+<li>key presses</li>
 <li>form submissions</li>
 </ul>
-<p>Two other events, mouse clicks and mouse scrolls, are only automatically captured in the enterprise edition. Since Countly must be ran on a server you own, you have access to all of your own data (which is stored in MongoDB), and they also provide a UI for visualizing and exploring your data.</p>
-<p>The largest drawbacks to Countly are the limited number of events captured (anything else must be implemented manually) and that their pipeline setup is a direct connection from their API to their database (this is also true of EventHub). Why this latter design is problematic will be discussed below.</p>
-<h3 id="chronos">Chronos</h3>
-<p>For Chronos to be an alternative in this space, it must solve the problems listed above as well as provide some benefits compared to the existing solutions. In the end, Chronos was able solve the 5 problems above:</p>
-<ol>
-<li>Chronos is open source, and thus free to use</li>
-<li>Data only exists on the server you host Chronos on and so you don&#39;t have to fear its security</li>
-<li>Chronos will never sample your data since it&#39;s just an infrastructure</li>
-<li>Chronos provides access to your raw data</li>
-<li>Chronos provides a config file that specifies which events you&#39;d like to capture: everything else is automated</li>
-</ol>
-<p>In addition to this, we provided a way for Chronos to visualize any queries over the data. We also wanted to make sure that Chronos would be space efficient since a greenfield application shouldn&#39;t be spending lots of money on their own server to collect data. Below we detail how we went about building Chronos and the challenges we faced.</p>
+<p>In addition to this, the tracker captures metadata about the page in which the events occur, such as:</p>
+<ul>
+<li>the url of the page</li>
+<li>the title of the page</li>
+<li>the user agent</li>
+<li>the language of the browser</li>
+<li>whether cookies are allowed</li>
+<li>a uuid</li>
+</ul>
+<p>The tracker first checks to see if a uuid exists within the <code>window.sessionStorage</code> object. If not, it creates one and stores it there.</p>
+<p>While capturing most of these events did not prove difficult, we did encounter difficulties when capturing mouse movements. Our first attempt was to add an event listener to the <code>mousemove</code> event which would store the <code>x</code> and <code>y</code> coordinates of the mouse in an object. We then had a <code>setInterval()</code> call that checked every 10ms whether the mouse had moved from its previous position, and to both record it if it did and reset the current position to this new location</p>
+<pre><code class="language-javascript">let mousePos;
+  let prevMousePos;
+
+  document.addEventListener(&#39;mousemove&#39;, (event) =&gt; {
+    mousePos = {
+      x: event.clientX,
+      y: event.clientY,
+    }
+  });
+
+  setInterval(() =&gt; {
+    const pos = mousePos;
+
+    if (pos) {
+      if (!prevMousePos || prevMousePos &amp;&amp; pos !== prevMousePos) {
+        console.log(&#39;ping&#39;);
+
+        prevMousePos = pos;
+      }
+    }
+  }, 100);
+  let mousePos;</code></pre>
+<p>By using <code>setInterval()</code> we were able to standardize the amount of data we were capturing in the <code>mousemovement</code> event across browsers since each has their own implementation of the rate of capture.</p>
+<p>However, when we began to try and send the events directly to the API, we began raising <code>net::ERR_INSUFFICIENT_RESOURCES</code> exceptions in certain browsers. We first attempted to reduce the granularity of the event to 20ms and then to 1000ms but kept running into the same error. Furthermore, on browsers that did not have this problem, the API began to choke on the sheer number of requests very quickly.</p>
+<p>(graphic goes here)</p>
+<p>A solution to this is to send the events in batch by storing them in a buffer and then sending the buffer when either a) it is full, or b) when the user begins to leave the page. Once we did this both the browser and the API stopped experiencing issues.</p>
+<p>(graphic goes here)</p>
+<h3 id="payload-size">Payload Size</h3>
+<p>(server specs, etc)</p>
+<p>In our the first design of our buffer, we sent each event over to the server as a JSON object. We tested the size of the events by sending a buffer with only link click events with the same values along with a consistent write key and metadata object. In this scenario, each event was roughly 92 bytes in size, and so a buffer containing 1,150 events would return a <code>413</code> error from the server.</p>
+<p>(show graphic of buffer with JSON)</p>
+<p>While a max buffer size of 1,150 events seems reasonable, we wanted to make sure to get as large of a payload as possible in order to ping the API less often. 1,150 events isn&#39;t as many as it may first seem when you remember that Chronos captures certain events such as key presses and mouse movements at a very small granularity. This problem will only increase in future iterations as Chronos captures even more events.</p>
+<p>We were able to optimize the buffer by removing the keys of the JSON object and instead sending all of the values in a nested array. Since the value at index <code>0</code> is the name of the event, we could use that information on the server side to write the data to the appropriate table in the databases. By doing this, we reduced the size of each of the events to roughly 42 bytes, allowing us to increase the maximum buffer size to over 2,500 events (a 100%+ increase in payload).</p>
+<p>(show graphic of buffer with arrays)</p>
+<p>While our next thought was to serialize the data into binary, a key problem is that we could never guarantee the size of our buffer, nor the values of the metadata object, nor the write key. As such, optimizing on binary would be unfeasible. We could instead just serialize the entire UTF-16 string into binary, but the minimum byte size for each character would be 8 bits which ended up being no more effective than just sending the string as is.</p>
+<h3 id="beacon-api-and-error-handling">Beacon API and Error Handling</h3>
+<p>By default, the tracker sends the data to the API server by using the Beacon API. This API was designed with analytics and diagnostics in mind as it allows for data to be sent in an asynchronous <code>POST</code> request that is non-blocking and thus doesn&#39;t interfere with the user&#39;s experience of the application. However, the Beacon API doesn&#39;t support error handling since it doesn&#39;t usually require to receive a response from the server. To handle errors, Chronos also allows for the Fetch API to be used.</p>
+<h3 id="security-concerns">Security Concerns</h3>
+<p>Since the tracker file lives on the client side, it presents inherent difficulties with security since the code can always be examined. As such, a malicious user can exploit the tracker to send corrupt data. However, we found from our research that this is an inherent difficulty within the field of web analytics:</p>
+<blockquote>
+<p>There’s no way to both allow clients to send data to Keen and prevent a malicious user of a client from sending bad data. This is an unfortunate reality. Google Analytics, Flurry, KissMetrics, etc., all have this problem. <em><a href="https://keen.io/docs/security/">Keen IO</a></em></p>
+</blockquote>
+<p>As such, we provided two layers of security. The first is that we provide a write key which exists both on the server side and is imbedded withint the tracker when it is compiled. When data is sent to the server we use middleware to check if the write key in the client matches that of the server. If it doesn&#39;t, the request is rejected. This way, if a developer notices that bad data is coming through to the server, the api key can be re-generated and thus prevent the malicious writes from coming through.</p>
+<p>The second layer of security is that another piece of middleware contains a listing of permitted host addresses that can write data to the server. If the incoming request comes from a host that isn&#39;t white listed, the server rejects the request. </p>

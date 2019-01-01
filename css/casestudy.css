@@ -133,6 +133,10 @@ p + h2 {
   margin-top: 80px;
 }
 
+main p {
+  color: #363739;
+}
+
 main p,
 pre,
 ol,
@@ -155,6 +159,13 @@ article ul { list-style: disc; }
 .caption {
   font-style: italic;
   text-align: center;
+}
+
+article p > code {
+  background: #D6CBC9;
+  padding: 2px;
+  border-radius: 5px;
+  font-size: 17px;
 }
 
 /* ==== Table ==== */
@@ -194,13 +205,25 @@ pre {
   border-radius: 10px;
   color: #C5CCC6;
   display: inline-block;
-  margin-left: 50%;
-  transform: translateX(-50%);
 }
 
-code {
-  font-family: monaco, monospace;
+blockquote {
+  background: #D6CBC9;
+  border-radius: 10px;
 }
+
+blockquote p {
+  padding: 20px;
+  font-style: italic;
+}
+
+div.code-block {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+code { font-family: monaco, monospace; }
 
 code[class*="language"] {
   display: block;
@@ -209,8 +232,14 @@ code[class*="language"] {
 }
 
 .json-key { color: #DF5763; }
+.hl-red { color: #DF5763; }
 .json-value-string { color: #9CE469; }
-.json-value-number { color: #FFAB40; }
+.hl-green { color: #9CE469; }
+.json-value-number, .js-constant { color: #FFAB40; }
+.hl-orange { color: #FFAB40; }
+.hl-purple { color: #E48FFE; }
+.hl-teal { color: #68D9ED; }
+
 
 /* ==== Footer ==== */
 footer {

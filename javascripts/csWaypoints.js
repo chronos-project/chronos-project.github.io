@@ -67,4 +67,20 @@ document.addEventListener('DOMContentLoaded', () => {
       addActive(tocReference);
     },
   });
+
+  let w4 = new Waypoint({
+    element: document.getElementById('capturing-events'),
+    handler: (direction) => {
+      removeActive(titles);
+      let tocReference;
+
+      if (direction === 'down') {
+        tocReference = document.getElementById('capturing-events-toc');
+      } else {
+        tocReference = document.getElementById('existing-solutions-toc');
+      }
+
+      addActive(tocReference);
+    },
+  });
 })
