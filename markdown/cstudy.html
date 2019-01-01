@@ -1,65 +1,23 @@
-<h2 id="capturing-events">Capturing Events</h2>
-<p>Chronos captures events on the client side by using a <code>tracker.js</code> file. The tracker itself is compiled from multiple files by using Browserify and automates the capturing of the following events:</p>
-<ul>
-<li>pageviews</li>
-<li>mouse movements</li>
-<li>mouse clicks</li>
-<li>link clicks</li>
-<li>key presses</li>
-<li>form submissions</li>
-</ul>
-<p>In addition to this, the tracker captures metadata about the page in which the events occur, such as:</p>
-<ul>
-<li>the url of the page</li>
-<li>the title of the page</li>
-<li>the user agent</li>
-<li>the language of the browser</li>
-<li>whether cookies are allowed</li>
-<li>a uuid</li>
-</ul>
-<p>The tracker first checks to see if a uuid exists within the <code>window.sessionStorage</code> object. If not, it creates one and stores it there.</p>
-<p>While capturing most of these events did not prove difficult, we did encounter difficulties when capturing mouse movements. Our first attempt was to add an event listener to the <code>mousemove</code> event which would store the <code>x</code> and <code>y</code> coordinates of the mouse in an object. We then had a <code>setInterval()</code> call that checked every 10ms whether the mouse had moved from its previous position, and to both record it if it did and reset the current position to this new location</p>
-<pre><code class="language-javascript">let mousePos;
-  let prevMousePos;
-
-  document.addEventListener(&#39;mousemove&#39;, (event) =&gt; {
-    mousePos = {
-      x: event.clientX,
-      y: event.clientY,
-    }
-  });
-
-  setInterval(() =&gt; {
-    const pos = mousePos;
-
-    if (pos) {
-      if (!prevMousePos || prevMousePos &amp;&amp; pos !== prevMousePos) {
-        console.log(&#39;ping&#39;);
-
-        prevMousePos = pos;
-      }
-    }
-  }, 100);
-  let mousePos;</code></pre>
-<p>By using <code>setInterval()</code> we were able to standardize the amount of data we were capturing in the <code>mousemovement</code> event across browsers since each has their own implementation of the rate of capture.</p>
-<p>However, when we began to try and send the events directly to the API, we began raising <code>net::ERR_INSUFFICIENT_RESOURCES</code> exceptions in certain browsers. We first attempted to reduce the granularity of the event to 20ms and then to 1000ms but kept running into the same error. Furthermore, on browsers that did not have this problem, the API began to choke on the sheer number of requests very quickly.</p>
-<p>(graphic goes here)</p>
-<p>A solution to this is to send the events in batch by storing them in a buffer and then sending the buffer when either a) it is full, or b) when the user begins to leave the page. Once we did this both the browser and the API stopped experiencing issues.</p>
-<p>(graphic goes here)</p>
-<h3 id="payload-size">Payload Size</h3>
-<p>(server specs, etc)</p>
-<p>In our the first design of our buffer, we sent each event over to the server as a JSON object. We tested the size of the events by sending a buffer with only link click events with the same values along with a consistent write key and metadata object. In this scenario, each event was roughly 92 bytes in size, and so a buffer containing 1,150 events would return a <code>413</code> error from the server.</p>
-<p>(show graphic of buffer with JSON)</p>
-<p>While a max buffer size of 1,150 events seems reasonable, we wanted to make sure to get as large of a payload as possible in order to ping the API less often. 1,150 events isn&#39;t as many as it may first seem when you remember that Chronos captures certain events such as key presses and mouse movements at a very small granularity. This problem will only increase in future iterations as Chronos captures even more events.</p>
-<p>We were able to optimize the buffer by removing the keys of the JSON object and instead sending all of the values in a nested array. Since the value at index <code>0</code> is the name of the event, we could use that information on the server side to write the data to the appropriate table in the databases. By doing this, we reduced the size of each of the events to roughly 42 bytes, allowing us to increase the maximum buffer size to over 2,500 events (a 100%+ increase in payload).</p>
-<p>(show graphic of buffer with arrays)</p>
-<p>While our next thought was to serialize the data into binary, a key problem is that we could never guarantee the size of our buffer, nor the values of the metadata object, nor the write key. As such, optimizing on binary would be unfeasible. We could instead just serialize the entire UTF-16 string into binary, but the minimum byte size for each character would be 8 bits which ended up being no more effective than just sending the string as is.</p>
-<h3 id="beacon-api-and-error-handling">Beacon API and Error Handling</h3>
-<p>By default, the tracker sends the data to the API server by using the Beacon API. This API was designed with analytics and diagnostics in mind as it allows for data to be sent in an asynchronous <code>POST</code> request that is non-blocking and thus doesn&#39;t interfere with the user&#39;s experience of the application. However, the Beacon API doesn&#39;t support error handling since it doesn&#39;t usually require to receive a response from the server. To handle errors, Chronos also allows for the Fetch API to be used.</p>
-<h3 id="security-concerns">Security Concerns</h3>
-<p>Since the tracker file lives on the client side, it presents inherent difficulties with security since the code can always be examined. As such, a malicious user can exploit the tracker to send corrupt data. However, we found from our research that this is an inherent difficulty within the field of web analytics:</p>
-<blockquote>
-<p>There’s no way to both allow clients to send data to Keen and prevent a malicious user of a client from sending bad data. This is an unfortunate reality. Google Analytics, Flurry, KissMetrics, etc., all have this problem. <em><a href="https://keen.io/docs/security/">Keen IO</a></em></p>
-</blockquote>
-<p>As such, we provided two layers of security. The first is that we provide a write key which exists both on the server side and is imbedded withint the tracker when it is compiled. When data is sent to the server we use middleware to check if the write key in the client matches that of the server. If it doesn&#39;t, the request is rejected. This way, if a developer notices that bad data is coming through to the server, the api key can be re-generated and thus prevent the malicious writes from coming through.</p>
-<p>The second layer of security is that another piece of middleware contains a listing of permitted host addresses that can write data to the server. If the incoming request comes from a host that isn&#39;t white listed, the server rejects the request. </p>
+<h2 id="api-server">API Server</h2>
+<p>Once the data reached the server, our first design was to iterate over the buffer of events and append the <code>metadata</code> object to each of them and then to write them directly to the database. What&#39;s nice about this design is that it&#39;s very straightforward and easy to understand, but we could already forsee potential problems.</p>
+<h3 id="code-coupling">Code Coupling</h3>
+<p>Our API was now performing a few different actions: not only was it receiving data from the client side, but it was now massaging the data to the appropriate format and then writing it to the database. What this meant was that we were having to write code that tightly coupled the different pieces of our architecture together.</p>
+<p>While this may not seem to bad at the moment, imagine a hypothetical system where data went through a web server to our application layer which was tightly coupled to our database (as was the case with Chronos at this time). Visually, it would look something like this:</p>
+<p><img src="https://i.imgur.com/3OYAtGU.png" alt="diagram 1"></p>
+<p>If our application didn&#39;t intend to do anything beyond this, then perhaps this is an okay design choice. However, perhaps we add a Redis for caching popular queries and Hadoop HDFS for long term data storage.</p>
+<p><img src="https://i.imgur.com/LGd9jkg.png" alt="diagram 2"></p>
+<p>Now our API server is having to write to various pieces of architecture, each of which will further couple our system. Further, we may need some workers for the various pieces to communicate to one another, which further entagles the entire system together. Even here it&#39;s not <em>too</em> bad, but just add a bit more...</p>
+<p><img src="https://i.imgur.com/rzAdQg2.png" alt="diagram 3"></p>
+<p>It&#39;s a mess! The pieces have become so entwined with one another that to have them communicate might involve a series of workers and other steps that, if any other part of the system fails, could also affect this communication. This problem will just continue to grow as our application does as well.</p>
+<p>The way to decouple the pieces of architecture from one another is to use a messaging queue as a central piece which facilitates the communication of the various parts of the system. The messaging queue uses a &quot;Pub/Sub architecture&quot; where producers of data send messages to a topic and consumers of data would read those messages from the same topic. This also modularizes our system so that it is easy to add new producers and consumers as we need them.</p>
+<p><img src="https://i.imgur.com/uUTKpCy.png" alt="diagram 4"></p>
+<p>By switching to a queue, we were able to simplify the API for Chronos. Instead of writing coupling code which massaged the data in a particular way, we took any received data and put it into a topic to be consumed later on as needed.</p>
+<pre><code class="language-javascript">try {
+    producer.send(topic, { json });
+    res.send(JSON.stringify({&quot;success&quot;: true}));
+  } catch (e) {
+    res.send(JSON.stringify({
+      &quot;success&quot;: false,
+      &quot;error&quot;: String(e)
+    }));
+  }</code></pre>

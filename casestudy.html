@@ -44,6 +44,11 @@
               <li class="h3" data-element="security-concerns">Security Concerns</li>
             </ul>
           </li>
+          <li class="h2" id="api-server-toc" data-element="api-server">API Server
+            <ul>
+              <li class="h3" data-element="code-coupling">Code Coupling</li>
+            </ul>
+          </li>
         </ul>
       </nav>
       <article>
@@ -283,7 +288,37 @@
           </blockquote>
           <p>As such, we provided two layers of security. The first is that we provide a write key which exists both on the server side and is imbedded withint the tracker when it is compiled. When data is sent to the server we use middleware to check if the write key in the client matches that of the server. If it doesn&#39;t, the request is rejected. This way, if a developer notices that bad data is coming through to the server, the api key can be re-generated and thus prevent the malicious writes from coming through.</p>
           <p>The second layer of security is that another piece of middleware contains a listing of permitted host addresses that can write data to the server. If the incoming request comes from a host that isn&#39;t white listed, the server rejects the request. </p>
+          <h2 id="api-server">API Server</h2>
+          <p>Once the data reached the server, our first design was to iterate over the buffer of events and append the <code>metadata</code> object to each of them and then to write them directly to the database. What&#39;s nice about this design is that it&#39;s very straightforward and easy to understand, but we could already forsee potential problems.</p>
+          <h3 id="code-coupling">Code Coupling</h3>
+          <p>Our API was now performing a few different actions: not only was it receiving data from the client side, but it was now massaging the data to the appropriate format and then writing it to the database. What this meant was that we were having to write code that tightly coupled the different pieces of our architecture together.</p>
+          <p>While this may not seem to bad at the moment, imagine a hypothetical system where data went through a web server to our application layer which was tightly coupled to our database (as was the case with Chronos at this time). Visually, it would look something like this:</p>
+          <div class="image"><img src="https://i.imgur.com/3OYAtGU.png" alt="diagram 1"></div>
+          <p>If our application didn&#39;t intend to do anything beyond this, then perhaps this is an okay design choice. However, perhaps we add a Redis for caching popular queries and Hadoop HDFS for long term data storage.</p>
+          <div class="image"><img src="https://i.imgur.com/LGd9jkg.png" alt="diagram 2"></div>
+          <p>Now our API server is having to write to various pieces of architecture, each of which will further couple our system. Further, we may need some workers for the various pieces to communicate to one another, which further entagles the entire system together. Even here it&#39;s not <em>too</em> bad, but just add a bit more...</p>
+          <div class="image"><img src="https://i.imgur.com/rzAdQg2.png" alt="diagram 3"></div>
+          <p>It&#39;s a mess! The pieces have become so entwined with one another that to have them communicate might involve a series of workers and other steps that, if any other part of the system fails, could also affect this communication. This problem will just continue to grow as our application does as well.</p>
+          <p>The way to decouple the pieces of architecture from one another is to use a messaging queue as a central piece which facilitates the communication of the various parts of the system. The messaging queue uses a &quot;Pub/Sub architecture&quot; where producers of data send messages to a topic and consumers of data would read those messages from the same topic. This also modularizes our system so that it is easy to add new producers and consumers as we need them.</p>
+          <div class="image"><img src="https://i.imgur.com/uUTKpCy.png" alt="diagram 4"></div>
+          <p>By switching to a queue, we were able to simplify the API for Chronos. Instead of writing coupling code which massaged the data in a particular way, we took any received data and put it into a topic to be consumed later on as needed.</p>
+          <div class="code-block">
+            <pre>
+              <code class="language-javascript">
+<span class="hl-purple">try</span> {
+  <span class="hl-purple">const</span> <span class="hl-orange">json</span> <span class="hl-teal">=</span> <span class="hl-yellow">JSON</span>.<span class="hl-teal">stringify</span>(req.body[<span class="hl-green">'data'</span>]);
 
+  <span class="hl-purple">producer</span>.<span class="hl-teal">send</span>(topic, { json });
+  <span class="hl-red">res</span>.<span class="hl-blue">send</span>(<span class="hl-yellow">JSON</span>.<span class="hl-teal">stringify</span>({<span class="hl-green">&quot;success&quot;</span>: <span class="hl-orange">true</span>}));
+} <span class="hl-purple">catch</span> (e) {
+  <span class="hl-red">res</span>.<span class="hl-teal">send</span>(<span class="hl-yellow">JSON</span>.<span class="hl-teal">stringify</span>({
+    <span class="hl-green">&quot;success&quot;</span>: <span class="hl-orange">false</span>,
+    <span class="hl-green">&quot;error&quot;</span>: <span class="hl-yellow">String</span>(e)
+  }));
+}
+              </code>
+            </pre>
+          </div>
         </div>
       </article>
     </main>
