@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   });
 
-  let w1 = new Waypoint({
+  let introWaypoint = new Waypoint({
     element: document.getElementById('introduction'),
     handler: () => {
       removeActive(titles);
@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  let w2 = new Waypoint({
+  let eventDataWaypoint = new Waypoint({
     element: document.getElementById('what-is-event-data-'),
     handler: (direction) => {
       removeActive(titles);
@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
     },
   });
 
-  let w3 = new Waypoint({
+  let solutionsWaypoint = new Waypoint({
     element: document.getElementById('existing-solutions'),
     handler: (direction) => {
       removeActive(titles);
@@ -68,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
     },
   });
 
-  let w4 = new Waypoint({
+  let eventsWaypoint = new Waypoint({
     element: document.getElementById('capturing-events'),
     handler: (direction) => {
       removeActive(titles);
@@ -84,7 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
     },
   });
 
-  let w5 = new Waypoint({
+  let apiWaypoint = new Waypoint({
     element: document.getElementById('api-server'),
     handler: (direction) => {
       removeActive(titles);
@@ -100,7 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
     },
   });
 
-  let w6 = new Waypoint({
+  let kafkaWaypoint = new Waypoint({
     element: document.getElementById('apache-kafka'),
     handler: (direction) => {
       removeActive(titles);
@@ -110,6 +110,38 @@ document.addEventListener('DOMContentLoaded', () => {
         tocReference = document.getElementById('apache-kafka-toc');
       } else {
         tocReference = document.getElementById('api-server-toc');
+      }
+
+      addActive(tocReference);
+    },
+  });
+
+  let dockerWaypoint = new Waypoint({
+    element: document.getElementById('docker'),
+    handler: (direction) => {
+      removeActive(titles);
+      let tocReference;
+
+      if (direction === 'down') {
+        tocReference = document.getElementById('docker-toc');
+      } else {
+        tocReference = document.getElementById('apache-kafka-toc');
+      }
+
+      addActive(tocReference);
+    },
+  });
+
+  let cliWaypoint = new Waypoint({
+    element: document.getElementById('chronos-cli'),
+    handler: (direction) => {
+      removeActive(titles);
+      let tocReference;
+
+      if (direction === 'down') {
+        tocReference = document.getElementById('chronos-cli-toc');
+      } else {
+        tocReference = document.getElementById('docker-toc');
       }
 
       addActive(tocReference);

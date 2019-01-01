@@ -51,6 +51,8 @@
             </ul>
           </li>
           <li class="h2" id="apache-kafka-toc" data-element="apache-kafka">Apache Kafka</li>
+          <li class="h2" id="docker-toc" data-element="docker">Docker</li>
+          <li class="h2" id="chronos-cli-toc" data-element="chronos-cli">Chronos CLI</li>
         </ul>
       </nav>
       <article>
@@ -338,6 +340,130 @@
           <p>In the case of Chronos, we have a single <code>events</code> topic which is across 3 brokers. We chose 3 brokers to increase availability since we can support up to N - 1 brokers going down. This way, if one broker is taken offline for any kind of management, and another one unexpectedly crashes, we still have one broker remaining to push the data to. Since message ordering wasn&#39;t a concern, we split the topic into 6 partitions (2 per broker) in order to increase parallelism and thus throughput. There is a <code>chronos</code> consumer group that contains 6 consumers, one for each partition, that reads the data and then writes it to the databases.</p>
           <p>(image)</p>
           <p>While Kafka helped to decouple our system and make it a streaming system at its core, it did introduce some new problems. Firstly, Kafka can be difficult to set up and configure, and we wanted to abstract and standardize that process away from the developer so that the host OS for deployment wasn&#39;t a concern. Secondly, Kafka does require monitoring and management, and we didn&#39;t want the developer to be bogged down managing Kafka as opposed to working on the core of the application at hand.</p>
+          <h2 id="docker">Docker</h2>
+          <p>We decided to use Docker in order to configure and standardize our Kafka setup so as to make deployment as painless as possible for the developer. By utilizing the isolating capabilities of containers, we can deploy our Zookeeper and Kafka Cluster setup on various environments and so not limit the developer to whatever OS we built Chronos in.</p>
+          <p>We decided to use Confluent&#39;s Kafka images simply because a) the Confluent team keeps their images up to date since they are essentially the creators of Kafka, and b) they provide robust documentation and tutorials for using Kafka in Docker. We orchestrate the setup of our containers by using Docker Compose and linking our 3 brokers to our Zookeeper container. We use volumes to persist both the Zookeeper logs as well as the data for Zookeeper and all 3 brokers.</p>
+          <div class="code-block">
+            <pre>
+              <code class="language-yaml">
+<span class="hl-red">version</span>: <span class="hl-green">&#39;3&#39;</span>
+<span class="hl-red">services</span>:
+  <span class="hl-red">zookeeper</span>:
+    <span class="hl-red">image</span>: <span class="hl-green">confluentinc/cp-zookeeper:latest</span>
+    <span class="hl-red">environment</span>:
+      <span class="hl-red">ZOOKEEPER_CLIENT_PORT</span>: <span class="hl-orange">2181</span>
+      <span class="hl-red">ZOOKEEPER_TICK_TIME</span>: <span class="hl-orange">2000</span>
+    <span class="hl-red">volumes</span>:
+      <span class="hl-green">- zk-data:/var/lib/zookeeper/data</span>
+      <span class="hl-green">- zk-txn-logs:/var/lib/zookeeper/log</span>
+
+  <span class="hl-red">kafka-1</span>:
+    <span class="hl-red">image</span>: <span class="hl-green">confluentinc/cp-kafka:latest</span>
+    <span class="hl-red">depends_on</span>:
+      <span class="hl-green">- zookeeper</span>
+    <span class="hl-red">environment</span>:
+      <span class="hl-red">KAFKA_BROKER_ID</span>: <span class="hl-orange">1</span>
+      <span class="hl-red">KAFKA_ZOOKEEPER_CONNECT</span>: <span class="hl-green">zookeeper:2181</span>
+      <span class="hl-red">KAFKA_ADVERTISED_LISTENERS</span>: <span class="hl-green">PLAINTEXT://kafka-1:29092</span>
+      <span class="hl-red">KAFKA_LISTENER_SECURITY_PROTOCOL_MAP</span>: <span class="hl-green">PLAINTEXT:PLAINTEXT</span>
+      <span class="hl-red">KAFKA_INTER_BROKER_LISTENER_NAME</span>: <span class="hl-green">PLAINTEXT</span>
+      <span class="hl-red">KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR</span>: <span class="hl-orange">1</span>
+    <span class="hl-red">volumes</span>:
+      <span class="hl-green">- kafka1-data:/var/lib/kafka/data</span>
+
+  <span class="hl-red">kafka-2</span>:
+    <span class="hl-red">image</span>: <span class="hl-green">confluentinc/cp-kafka:latest</span>
+    <span class="hl-red">depends_on</span>:
+      <span class="hl-green">- zookeeper</span>
+    <span class="hl-red">environment</span>:
+      <span class="hl-red">KAFKA_BROKER_ID</span>: <span class="hl-orange">2</span>
+      <span class="hl-red">KAFKA_ZOOKEEPER_CONNECT</span>: <span class="hl-green">zookeeper:2181</span>
+      <span class="hl-red">KAFKA_ADVERTISED_LISTENERS</span>: <span class="hl-green">PLAINTEXT://kafka-2:29092</span>
+      <span class="hl-red">KAFKA_LISTENER_SECURITY_PROTOCOL_MAP</span>: <span class="hl-green">PLAINTEXT:PLAINTEXT</span>
+      <span class="hl-red">KAFKA_INTER_BROKER_LISTENER_NAME</span>: <span class="hl-green">PLAINTEXT</span>
+      <span class="hl-red">KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR</span>: <span class="hl-orange">1</span>
+    <span class="hl-red">volumes</span>:
+      <span class="hl-green">- kafka2-data:/var/lib/kafka/data</span>
+
+  <span class="hl-red">kafka-3</span>:
+    <span class="hl-red">image</span>: <span class="hl-green">confluentinc/cp-kafka:latest</span>
+    <span class="hl-red">depends_on</span>:
+      <span class="hl-green">- zookeeper</span>
+    <span class="hl-red">environment</span>:
+      <span class="hl-red">KAFKA_BROKER_ID</span>: <span class="hl-orange">3</span>
+      <span class="hl-red">KAFKA_ZOOKEEPER_CONNECT</span>: <span class="hl-green">zookeeper:2181</span>
+      <span class="hl-red">KAFKA_ADVERTISED_LISTENERS</span>: <span class="hl-green">PLAINTEXT://kafka-3:29092</span>
+      <span class="hl-red">KAFKA_LISTENER_SECURITY_PROTOCOL_MAP</span>: <span class="hl-green">PLAINTEXT:PLAINTEXT</span>
+      <span class="hl-red">KAFKA_INTER_BROKER_LISTENER_NAME</span>: <span class="hl-green">PLAINTEXT</span>
+      <span class="hl-red">KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR</span>: <span class="hl-orange">1</span>
+    <span class="hl-red">volumes</span>:
+      <span class="hl-green">- kafka3-data:/var/lib/kafka/data</span>
+                </code>
+              </pre>
+          </div>
+          <h2 id="chronos-cli">Chronos CLI</h2>
+          <p>While using Docker solved how we can deploy our cluster in various environments, it did introduce some new concerns. The first was one of run-time conditions: we cannot always guarantee the order in which our serivces boot up using Docker Compose, and this can lead to errors when the brokers attempt to connect to Zookeeper if Zookeeper isn&#39;t up and running first.</p>
+          <p>A quick solution to this is to run the Zookeeper container in detached mode for 5-10 seconds before running the rest of the system:</p>
+          <div class="code-block">
+            <pre>
+              <code class="language-bash">
+docker-compose up -d zookeeper
+<span class="hl-gray"><i>// (...5-10 seconds later)</i></span>
+docker-compose up
+              </code>
+            </pre>
+          </div>
+          <p>While this works, it&#39;s an inelegant solution and would require at least some knowledge of how Docker works.</p>
+          <p>Second, there were still some installation issues even after switching over to Docker. As for our Kafka Cluster, we still need to create the <code>events</code> topic that the data will be written to before running the whole system. This requires booting up the entire cluster and then knowing the Kafka CLI command for creating the topic:</p>
+          <div class="code-block">
+            <pre>
+              <code class="language-bash">
+docker-compose up -d zookeeper
+docker-compose up -d kafka-1
+docker-compose up -d kafka-2
+docker-compose up -d kafka-3
+docker exec -it chronos-pipeleine_kafka-1_1 kafka-topics \
+--zookeeper zookeeper:2181 --create --topic events \
+--partitions 6 --replication-factor 3 --if-not-exists
+docker-compose stop
+              </code>
+            </pre>
+          </div>
+          <p>In order to abstract this process, we created a CLI which wraps around the various <code>docker</code> and <code>docker-compose</code> commands and automatically deals with the race conditions. Thus, starting the system is done by running <code>chronos start</code>, and the elaborate Kafka installation above is now done by running <code>chronos install-kafka</code>. In total, the CLI supports the following commands:</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Command</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>start [service]</code></td>
+                <td>Starts either Chronos or a specified service</td>
+              </tr>
+              <tr>
+                <td><code>stop [service]</code></td>
+                <td>Stops either Chronos or a specified service</td>
+              </tr>
+              <tr>
+                <td><code>log (service)</code></td>
+                <td>Prints the logs of a service to the terminal</td>
+              </tr>
+              <tr>
+                <td><code>status</code></td>
+                <td>Prints the status of the services to the terminal</td>
+              </tr>
+              <tr>
+                <td><code>install-kafka</code></td>
+                <td>Installs the <code>events</code> topic used by the Kafka brokers</td>
+              </tr>
+              <tr>
+                <td><code>install-pipeline</code></td>
+                <td>Sets up the <code>chronos_pl</code> database used by PipelineDB</td>
+              </tr>
+            </tbody>
+          </table>
 
         </div>
       </article>

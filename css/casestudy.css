@@ -163,7 +163,8 @@ article ul { list-style: disc; }
 
 i { font-style: italic; }
 
-article p > code {
+article p > code,
+table code {
   background: #D6CBC9;
   padding: 2px;
   border-radius: 5px;
@@ -254,6 +255,7 @@ code[class*="language"] {
 .hl-teal { color: #68D9ED; }
 .hl-yellow { color: #E3D77D; }
 .hl-blue { color: #6CBDFF; }
+.hl-gray { color: #9E9E9E; }
 
 
 /* ==== Footer ==== */
