@@ -62,7 +62,14 @@
               </ul>
             </li>
             <li class="h2" id="grafana-toc" data-element="grafana">Grafana</li>
-            <li class="h2" id="future-plans-toc" data-element="future-plans">Future Plans</li>
+            <li class="h2" id="future-plans-toc" data-element="future-plans">Future Plans
+              <ul>
+                <li class="h3" data-element="cold-storage">Cold Storage</li>
+                <li class="h3" data-element="more-event-tracking-and-spa-support">More Event Tracking and SPA Support</li>
+                <li class="h3" data-element="scalability-and-distribution">Scalability and Distribution</li>
+                <li class="h3" data-element="implement-automatic-kafka-management">Implement Automatic Kafka Management</li>
+              </ul>
+            </li>
             <li class="h2" id="about-us-toc" data-element="about-us">About Us</li>
             <li class="h2" id="references-toc" data-element="references">References</li>
           </ul>
@@ -623,7 +630,17 @@ docker-compose stop
           <p><i>*<code>EVENT</code> is a TYPE that contains a list of all event types</i></p>
           <p>We then inserted 50 rows of data in each table and used TimescaleDB’s <code>hypertable_relation_size()</code> function on each of them. What we found was that each table’s bite size (excluding indexes and TOAST) was 49,152 bytes. This means by storing the JSON in a <code>metadata</code> column, we effectively halve the storage space. Since Chronos is trying to be as storage efficient as possible, this was a very good trade off. While this does make querying the metadata slightly harder, we felt this was okay given the storage benefits.</p>
           <p>With TimescaleDB, Chronos now provides an easy way for developers to explore their data to find interesting trends. However, if a developer wants to see the same query at various times, the query would have to be executed manually for each window of duration. What we wanted Chronos to do was provide real-time feedback for any queries that the developer specifies so that the querying process is &quot;automated&quot;. For this, we use our second time-series database: PipelineDB.</p>
-
+          <h2 id="future-plans">Future Plans</h2>
+          <h3 id="cold-storage">Cold Storage</h3>
+          <p>Currently, Chronos does not take any actions for moving data out of TimescaleDB to some other storage option. This is problematic because TimescaleDB is not meant to be a data dump <em>a la</em> HDFS, and as such it starts to experience significant performance loss between 50 to 100TB of data.</p>
+          <p>As such, we would like TimescaleDB to only hold on to data that is 30 days old. Anything older could be taken out of TimescaleDB and either stored elsewhere. This would not only limit the amount of data in TimescaleDB so that it could still be performant, but also retain data so it could be sent to a proprietary solution later on when the application has outgrown Chronos.</p>
+          <h3 id="more-event-tracking-and-spa-support">More Event Tracking and SPA Support</h3>
+          <p>While Chronos currently supports more automated event tracking than the other solutions in our use case space, there are many more we can add. In relation to this, we would also like to improve the data models of our events as well to provide as much robust information as possible.</p>
+          <p>However, even more critical is to develop support for Single Page Applications (SPA). Chronos currently only supports &quot;traditional&quot; applications, or where the application loads an HTML document for reach page. More and more applications are rather using AJAX requests in order to populate the content of their pages, and as such we want Chronos to be able to work with them.</p>
+          <h3 id="scalability-and-distribution">Scalability and Distribution</h3>
+          <p>Currently Chronos operates on a single node. One of our goals is to be able to scale Chronos horizontally on various nodes while still abstracting any difficulties for the developer in setting this up.</p>
+          <h3 id="implement-automatic-kafka-management">Implement Automatic Kafka Management</h3>
+          <p>While the Chronos CLI makes it easy to reboot individual Kafka containers, we would like to have a more automated process that responds to errors as they occur and takes the necessary steps to fix the issues as well as report any details to the developer. This would go a long way in the difficulties of managing Kafka for the developer and allow attention to be focused on the application and not Chronos.</p>
 
         </div>
       </article>

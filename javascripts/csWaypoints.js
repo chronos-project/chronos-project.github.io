@@ -163,4 +163,20 @@ document.addEventListener('DOMContentLoaded', () => {
       addActive(tocReference);
     },
   });
+
+  let futurePlansWaypoint = new Waypoint({
+    element: document.getElementById('future-plans'),
+    handler: (direction) => {
+      removeActive(titles);
+      let tocReference;
+
+      if (direction === 'down') {
+        tocReference = document.getElementById('future-plans-toc');
+      } else {
+        tocReference = document.getElementById('grafana-toc');
+      }
+
+      addActive(tocReference);
+    },
+  });
 })
