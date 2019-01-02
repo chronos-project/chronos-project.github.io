@@ -179,4 +179,20 @@ document.addEventListener('DOMContentLoaded', () => {
       addActive(tocReference);
     },
   });
+
+  let aboutUsWaypoint = new Waypoint({
+    element: document.getElementById('about-us'),
+    handler: (direction) => {
+      removeActive(titles);
+      let tocReference;
+
+      if (direction === 'down') {
+        tocReference = document.getElementById('about-us-toc');
+      } else {
+        tocReference = document.getElementById('future-plans-toc');
+      }
+
+      addActive(tocReference);
+    },
+  });
 })
