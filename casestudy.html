@@ -630,6 +630,66 @@ docker-compose stop
           <p><i>*<code>EVENT</code> is a TYPE that contains a list of all event types</i></p>
           <p>We then inserted 50 rows of data in each table and used TimescaleDB’s <code>hypertable_relation_size()</code> function on each of them. What we found was that each table’s bite size (excluding indexes and TOAST) was 49,152 bytes. This means by storing the JSON in a <code>metadata</code> column, we effectively halve the storage space. Since Chronos is trying to be as storage efficient as possible, this was a very good trade off. While this does make querying the metadata slightly harder, we felt this was okay given the storage benefits.</p>
           <p>With TimescaleDB, Chronos now provides an easy way for developers to explore their data to find interesting trends. However, if a developer wants to see the same query at various times, the query would have to be executed manually for each window of duration. What we wanted Chronos to do was provide real-time feedback for any queries that the developer specifies so that the querying process is &quot;automated&quot;. For this, we use our second time-series database: PipelineDB.</p>
+          <h3 id="pipelinedb">PipelineDB</h3>
+          <p>PipelineDB is an open-source PostgreSQL extension that processes event data in real time and was designed for analytics. In the common scenario, raw data is usually stored in databases and then being aggregated over and over again when needed.  Unlike entity data that is always being updated event data is immutable and is always being appended. Therefore storing indefinite amounts of raw data can very soon pose a scaling problem. In the same time aggregating large datasets in real-time makes read queries very inefficient.</p>
+          <p>PipelineDB doesn&#39;t store the event data. Instead it runs continuous aggreagtions over streaming event data, and only stores the summaries of those aggregations. After the data is aggregated it is discarded.</p>
+          <p>To better understand how it&#39;s done by PipelineDB we have to introduce its two fundamental abstractions: Streams and Continuous Views.</p>
+          <p>Streams in PipelineDB look like regular tables and a row in a stream looks like a table row and represents one event. But unlike regular tables streams do not store the data. Instead they are serving as the data sources to read from by Continuous views.</p>
+          <p>When each event arrives at the stream, it is given a small bitmap that represents a list of all continuous views that need to read the event.</p>
+          <div class="image no-bg"><img src="https://i.imgur.com/948w1Gz.png" alt=""></div>
+          <p>When a continuous view is done reading an event, it flips a single bit in the bitmap.</p>
+          <div class="image no-bg"><img src="https://i.imgur.com/5AqnN9h.png" alt=""></div>
+          <p>When all of the bits in the bitmap are set to 1, the event is discarded and can never be accessed again.</p>
+          <p>Once the data is consumed by the views it is being discarded.</p>
+          <p>Continuous views in PipelineDB are basically PostgreSQL materialized views. A continuous view has a predefined query that is being run continuously on a stream or a combination of streams and tables. As new data arrives to the stream it&#39;s read by the views and is incrementally updated. The view only stores the updated summary.</p>
+          <p>In Chronos we used PipelineDB for use cases when there is a need for real-time summary data (unique users per page, total users submitting the form, etc) or analytics and the queries are known in advance.</p>
+          <p>Also PipelineDB being PostgreSQL extension allows users to use familiar SQL syntax and not to worry about scaling or perfomance issues by using classic PostgreSQL.</p>
+          <h4 id="pipelinedb-streams-in-chronos">PipelineDB Streams in Chronos</h4>
+          <p>Currently, Chronos automatically creates a PipelineDB stream for each event that it tracks.</p>
+          <div class="code-block">
+            <pre>
+              <code class="language-sql">
+CREATE FOREIGN TABLE link_clicks(
+  link_text <span class="hl-purple">TEXT</span>,
+  target_url <span class="hl-purple">TEXT</span>,
+  client_time <span class="hl-purple">TIMESTAMPTZ</span>,
+  metadata JSONB
+)
+SERVER pipelinedb;
+              </code>
+            </pre>
+          </div>
+
+          <p>The data in the stream cannot be queried directly, but it is possible to look up what attributes a particular stream has. The attributes of a stream correspond to the attributes of the event type defined in the tracker (just like in our TimescaleDB tables).</p>
+          <p>By default, PipelineDB timestamps the events upon arrival and adds an additional attribute called <code>arrival_timestamp</code> containing that timestamp for each event. However, for real-time analytics it&#39;s important to aggreagate events using the timestamp of when those events happen (i.e. event time). Using the arrival timestamp of the event might not reflect the correct state of application in the specific point in time. Even though we do include a <code>client_time</code> attribute which records the event time, PipelineDB&#39;s sliding windows are based upon the <code>arrival_timestamp</code> attribute and thus only window upon processing time.</p>
+          <p>When a user event is generated in the application the tracker records an event type, a timestamp and state attributes describing the event. For analytics it&#39;s very important to capture as much data characteristics as possible. Additionally to the mentioned above attributes the tracker also records page metadata for each event.</p>
+          <p>Our research showed that event metadata is not aggregated too often or not at all. But for unforseen use cases there might be a need for it in the future. So instead of defining multiple  attributes in a stream for page metadata object we only defined one as a PostgreSQL <code>JSONB</code> type.</p>
+          <h4 id="pipelinedb-views-in-chronos">PipelineDB Views in Chronos</h4>
+          <p>For each stream in PipelineDB, Chronos also automatically creates the views for real-time data aggregation.</p>
+          <div class="code-block">
+            <pre>
+              <code class="language-sql">
+<span class="hl-purple">CREATE VIEW</span> <span class="hl-blue">link_text_counts</span> <span class="hl-purple">AS
+SELECT</span>
+  link_text,
+  <span class="hl-teal">COUNT</span>(*)
+<span class="hl-purple">FROM</span> link_clicks
+<span class="hl-purple">GROUP BY</span> link_text;
+              </code>
+            </pre>
+          </div>
+          <p>A view is described by the PostgreSQL <code>SELECT</code> query that specifies what type of aggregation will be performed on stream data. Every time the event arrives in a stream the query is run and the new result is stored in the view table.</p>
+          <div class="image no-bg"><img src="https://i.imgur.com/TpgTorN.png" alt=""></div>
+          <p>Since continuous views are a lot like regular views, when we need to retrieve the results from them we can just run <code>SELECT</code> on specific view:</p>
+          <div class="code-block">
+            <pre>
+              <code class="language-sql"><span class="hl-purple">SELECT</span> link_text <span class="hl-purple">AS FROM</span> link_text_count;</code>
+            </pre>
+          </div>
+          <div class="image no-bg"><img src="https://i.imgur.com/4PgyvHO.png" alt=""></div>
+          <p>We can use any <code>SELECT</code> statement to further analyze data in the continuous view.</p>
+          <p>/...</p>
+
           <h2 id="grafana">Grafana</h2>
           <p>To give more power to a developer&#39;s data exploration, Chronos uses Grafana to visualize queries in each of our databases. Though the developer has to manually link Grafana to each of the databases via Grafana&#39;s GUI, the process of doing so is quite easy (and we explain how to do so in <a href="https://github.com/chronos-project/chronos-pipeline">our repository&#39;s</a> <code>README</code> file. Once done, a developer can use either Grafana&#39;s query builder (GUI) or SQL to query the databases in order to visualize the data.</p>
           <div id="grafana-ts" class="image"><img src="https://i.imgur.com/3cgXOX6.png" alt="grafana-TS"></div>
