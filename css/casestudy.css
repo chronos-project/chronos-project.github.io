@@ -249,6 +249,13 @@ code[class*="language"] {
   margin: 10px 30px -3px 30px;
 }
 
+#grafana-ts { padding: 0; }
+
+#grafana-ts img {
+  width: 100%;
+  height: 100%;
+}
+
 .json-key { color: #DF5763; }
 .hl-red { color: #DF5763; }
 .json-value-string { color: #9CE469; }

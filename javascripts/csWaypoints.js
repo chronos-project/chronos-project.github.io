@@ -164,6 +164,22 @@ document.addEventListener('DOMContentLoaded', () => {
     },
   });
 
+  let grafanaWaypoint = new Waypoint({
+    element: document.getElementById('grafana'),
+    handler: (direction) => {
+      removeActive(titles);
+      let tocReference;
+
+      if (direction === 'down') {
+        tocReference = document.getElementById('grafana-toc');
+      } else {
+        tocReference = document.getElementById('storing-event-data-toc');
+      }
+
+      addActive(tocReference);
+    },
+  });
+
   let futurePlansWaypoint = new Waypoint({
     element: document.getElementById('future-plans'),
     handler: (direction) => {
