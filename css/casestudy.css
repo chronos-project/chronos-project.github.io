@@ -213,6 +213,16 @@ pre,
   height: 100%;
 }
 
+img[alt*="Sending"] {
+  box-shadow: none;
+}
+img[alt="log_to_table.png"],
+img[alt="table_to_log.png"] {
+  width: 40%;
+  height: 100%;
+  box-shadow: none;
+}
+
 /* ==== Table ==== */
 table {
   font-size: 22px;

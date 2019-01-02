@@ -184,9 +184,9 @@
           <h3 id="streams-and-tables">Streams and Tables</h3>
           <p>To start with, we&#39;ll need some working definitions of what streams and tables are. To borrow from Akidau, a <strong>stream</strong> is &quot;[a]n element-by-element view of the evolution of a dataset over time.&quot;[3] Streams have traditionally been processed by streaming systems that are designed to handle unbounded (infinite) datasets. A <strong>table</strong> is &quot;[a] holistic view of a dataset at a specific point in time&quot;[2] and is traditionally handled within relational databases (i.e. SQL). We can expand these definitions by saying that streams are data that are in motion, while tables are data that are at rest.</p>
           <p>Staying with tables for a moment, it&#39;s worth remembering that the underlying data structure for many databases is a log, more specifically one that is append-only. As each transaction takes place for a particular entity, they are recorded to the log. The log, then, can be seen as a kind of stream of data which can be used to re-create the state of a table within our database. More broadly speaking, the aggregation of a stream will give us a table.</p>
-          <p>(diagram)</p>
+          <div class="image no-bg"><img src="https://i.imgur.com/lBVpTOv.png" alt="log_to_table.png"></div>
           <p>The inverse of this relationship is that streams are created from tables as a kind of change-log for the table. In other words, if we look at the changes that occur on a particular entity over time, we end up with a stream of data.</p>
-          <p>(diagram)</p>
+          <div class="image no-bg"><img src="https://i.imgur.com/cKpyBpI.png" alt="table_to_log.png"/></div>
           <p>To bring this back to event data and entity data: if we were to write all the event data within our application onto a log, then we would be able to re-create the state of any entity data that we needed. In other words, rather than being two separate kinds of data, event data are the individual data points that make up the stream of our application, while entity data are the aggregated snapshots of our stream of event data.</p>
           <p>In this respect, though databases are often thought of as the &quot;source of truth&quot; in an application, they actually contain just a set of aggregations of event data at a particular point in time. It is the log that holds the event data that is the actual source of truth of our application since it contains the fundamental building blocks to recreate the state of the application.</p>
           <p>(image)</p>
@@ -292,16 +292,58 @@
           </div>
           <p>By using <code>setInterval()</code> we were able to standardize the amount of data we were capturing in the <code>mousemovement</code> event across browsers since each has their own implementation of the rate of capture.</p>
           <p>However, when we began to try and send the events directly to the API, we began raising <code>net::ERR_INSUFFICIENT_RESOURCES</code> exceptions in certain browsers. We first attempted to reduce the granularity of the event to 20ms and then to 1000ms but kept running into the same error. Furthermore, on browsers that did not have this problem, the API began to choke on the sheer number of requests very quickly.</p>
-          <p>(graphic goes here)</p>
+          <div class="image no-bg"><img src="https://i.imgur.com/kUYAfRj.png" alt="Sending events in a direct stream results in a failure"/></div>
           <p>A solution to this is to send the events in batch by storing them in a buffer and then sending the buffer when either a) it is full, or b) when the user begins to leave the page. Once we did this both the browser and the API stopped experiencing issues.</p>
-          <p>(graphic goes here)</p>
+          <div class="image no-bg"><img src="https://i.imgur.com/6HX9MW5.png?1" alt="Sending many events in a buffer works"/></div>
           <h3 id="payload-size">Payload Size</h3>
           <p>(server specs, etc)</p>
           <p>In our the first design of our buffer, we sent each event over to the server as a JSON object. We tested the size of the events by sending a buffer with only link click events with the same values along with a consistent write key and metadata object. In this scenario, each event was roughly 92 bytes in size, and so a buffer containing 1,150 events would return a <code>413</code> error from the server.</p>
-          <p>(show graphic of buffer with JSON)</p>
+          <div class="code-block">
+            <pre>
+              <code class="language-JSON">
+[
+  {
+    <span class="hl-red">"ACCESS_KEY"</span>: ...,
+    <span class="hl-red">"data"</span>: [
+      {
+        <span class="hl-red">"eType"</span>: <span class="hl-green">"link_clicks"</span>,
+        <span class="hl-red">"link_text"</span>: <span class="hl-green">"Come check out our gallery of photos!"</span>,
+        <span class="hl-red">"target_url"</span>: <span class="hl-green">"foo.com/images"</span>,
+        <span class="hl-red">"client_time"</span>: <span class="hl-green">"2018-12-15 00:34:03.8+00</span>"
+      },
+      <span class="hl-gray">// Many more events...</span>
+    ],
+    <span class="hl-red">"metadata"</span>: {
+      { ... }
+  }
+]
+              </code>
+            </pre>
+          </div>
           <p>While a max buffer size of 1,150 events seems reasonable, we wanted to make sure to get as large of a payload as possible in order to ping the API less often. 1,150 events isn&#39;t as many as it may first seem when you remember that Chronos captures certain events such as key presses and mouse movements at a very small granularity. This problem will only increase in future iterations as Chronos captures even more events.</p>
           <p>We were able to optimize the buffer by removing the keys of the JSON object and instead sending all of the values in a nested array. Since the value at index <code>0</code> is the name of the event, we could use that information on the server side to write the data to the appropriate table in the databases. By doing this, we reduced the size of each of the events to roughly 42 bytes, allowing us to increase the maximum buffer size to over 2,500 events (a 100%+ increase in payload).</p>
-          <p>(show graphic of buffer with arrays)</p>
+          <div class="code-block">
+            <pre>
+              <code class="language-JSON">
+[
+  {
+    <span class="hl-red">"ACCESS_KEY"</span>: ...,
+    <span class="hl-red">"data"</span>: [
+      [
+        <span class="hl-green">"link_clicks"</span>,
+        <span class="hl-green">"Come check out our gallery of photos!"</span>,
+        <span class="hl-green">"foo.com/images"</span>,
+        <span class="hl-green">"2018-12-15 00:34:03.8+00</span>"
+      ],
+      <span class="hl-gray">// Many more events...</span>
+    ],
+    <span class="hl-red">"metadata"</span>: {
+      { ... }
+  }
+]
+              </code>
+            </pre>
+          </div>
           <p>While our next thought was to serialize the data into binary, a key problem is that we could never guarantee the size of our buffer, nor the values of the metadata object, nor the write key. As such, optimizing on binary would be unfeasible. We could instead just serialize the entire UTF-16 string into binary, but the minimum byte size for each character would be 8 bits which ended up being no more effective than just sending the string as is.</p>
           <h3 id="beacon-api-and-error-handling">Beacon API and Error Handling</h3>
           <p>By default, the tracker sends the data to the API server by using the Beacon API. This API was designed with analytics and diagnostics in mind as it allows for data to be sent in an asynchronous <code>POST</code> request that is non-blocking and thus doesn&#39;t interfere with the user&#39;s experience of the application. However, the Beacon API doesn&#39;t support error handling since it doesn&#39;t usually require to receive a response from the server. To handle errors, Chronos also allows for the Fetch API to be used.</p>
@@ -706,7 +748,7 @@ SELECT</span>
           <h3 id="implement-automatic-kafka-management">Implement Automatic Kafka Management</h3>
           <p>While the Chronos CLI makes it easy to reboot individual Kafka containers, we would like to have a more automated process that responds to errors as they occur and takes the necessary steps to fix the issues as well as report any details to the developer. This would go a long way in the difficulties of managing Kafka for the developer and allow attention to be focused on the application and not Chronos.</p>
           <h2 id="about-us">About Us</h2>
-          <p>The team behind Chronos consists of two full-stack software engineers who collaborated remotely within the united states. Please feel free to reach out <a href="chronos-project.github.io/team">to us</a> with any questions about Chronos or if you&#39;d like to just discuss any of the topics covered here!</p>
+          <p>The team behind Chronos consists of two full-stack software engineers who collaborated remotely within the united states. Please feel free to reach out <a href="team.html">to us</a> with any questions about Chronos or if you&#39;d like to just discuss any of the topics covered here!</p>
           <h2 id="references">References</h2>
           <p>Please head over to our <a href="chronos-project.github.io/bibliography">Bibliography</a> for a complete listing of resources we used to research and build Chronos.</p>
           <p>[1] Keen IO, <i>Build vs. Buy Gets Easier with APIs: A CTO&#39;s Guide to Getting Data Strategy Right</i>, 3.</p>
