@@ -147,4 +147,20 @@ document.addEventListener('DOMContentLoaded', () => {
       addActive(tocReference);
     },
   });
+
+  let storingEventDataWaypoint = new Waypoint({
+    element: document.getElementById('storing-event-data'),
+    handler: (direction) => {
+      removeActive(titles);
+      let tocReference;
+
+      if (direction === 'down') {
+        tocReference = document.getElementById('storing-event-data-toc');
+      } else {
+        tocReference = document.getElementById('chronos-cli-toc');
+      }
+
+      addActive(tocReference);
+    },
+  });
 })

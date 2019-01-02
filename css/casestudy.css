@@ -57,8 +57,10 @@ body > nav a img {
   width: 31vw;
   margin-top: 250px;
   position: sticky;
-  top: 20px;
+  top: 0px;
   align-self: flex-start;
+  overflow-y: auto;
+  height: 100vh;
 }
 
 #toc > ul {
@@ -129,7 +131,9 @@ article div {
 
 article a { color: #69C; }
 
-p + h2 {
+p + h2,
+div.code-block + h2,
+table + h2 {
   margin-top: 80px;
 }
 

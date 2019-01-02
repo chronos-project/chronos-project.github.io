@@ -20,41 +20,54 @@
       </ul>
     </nav>
     <main>
-      <nav id="toc">
-        <ul>
-          <li class="h2 active" id="introduction-toc" data-element="introduction">Introduction</li>
-          <li class="h2" id="what-is-event-data-toc" data-element="what-is-event-data-">What is Event Data?
-            <ul>
-              <li class="h3" data-element="event-data-vs-entity-data">Event Data vs Entity Data</li>
-              <li class="h3" data-element="streams-and-tables">Streams and Tables</li>
-            </ul>
-          </li>
-          <li class="h2" id="existing-solutions-toc" data-element="existing-solutions">Existing Solutions
-            <ul>
-              <li class="h3" data-element="yandex-metrica">Yandex Metrica</li>
-              <li class="h3" data-element="eventhub">EventHub</li>
-              <li class="h3" data-element="countly-community-edition">Countly Community Edition</li>
-              <li class="h3" data-element="chronos">Chronos</li>
-            </ul>
-          </li>
-          <li class="h2" id="capturing-events-toc" data-element="capturing-events">Capturing Events
-            <ul>
-              <li class="h3" data-element="payload-size">Payload Size</li>
-              <li class="h3" data-element="beacon-api-and-error-handling">Beacon API and Error Handling</li>
-              <li class="h3" data-element="security-concerns">Security Concerns</li>
-            </ul>
-          </li>
-          <li class="h2" id="api-server-toc" data-element="api-server">API Server
-            <ul>
-              <li class="h3" data-element="code-coupling">Code Coupling</li>
-              <li class="h3" data-element="which-queue-to-choose">Which Queue to Choose</li>
-            </ul>
-          </li>
-          <li class="h2" id="apache-kafka-toc" data-element="apache-kafka">Apache Kafka</li>
-          <li class="h2" id="docker-toc" data-element="docker">Docker</li>
-          <li class="h2" id="chronos-cli-toc" data-element="chronos-cli">Chronos CLI</li>
-        </ul>
-      </nav>
+      <div>
+        <nav id="toc">
+          <ul>
+            <li class="h2 active" id="introduction-toc" data-element="introduction">Introduction</li>
+            <li class="h2" id="what-is-event-data-toc" data-element="what-is-event-data-">What is Event Data?
+              <ul>
+                <li class="h3" data-element="event-data-vs-entity-data">Event Data vs Entity Data</li>
+                <li class="h3" data-element="streams-and-tables">Streams and Tables</li>
+              </ul>
+            </li>
+            <li class="h2" id="existing-solutions-toc" data-element="existing-solutions">Existing Solutions
+              <ul>
+                <li class="h3" data-element="yandex-metrica">Yandex Metrica</li>
+                <li class="h3" data-element="eventhub">EventHub</li>
+                <li class="h3" data-element="countly-community-edition">Countly Community Edition</li>
+                <li class="h3" data-element="chronos">Chronos</li>
+              </ul>
+            </li>
+            <li class="h2" id="capturing-events-toc" data-element="capturing-events">Capturing Events
+              <ul>
+                <li class="h3" data-element="payload-size">Payload Size</li>
+                <li class="h3" data-element="beacon-api-and-error-handling">Beacon API and Error Handling</li>
+                <li class="h3" data-element="security-concerns">Security Concerns</li>
+              </ul>
+            </li>
+            <li class="h2" id="api-server-toc" data-element="api-server">API Server
+              <ul>
+                <li class="h3" data-element="code-coupling">Code Coupling</li>
+                <li class="h3" data-element="which-queue-to-choose">Which Queue to Choose</li>
+              </ul>
+            </li>
+            <li class="h2" id="apache-kafka-toc" data-element="apache-kafka">Apache Kafka</li>
+            <li class="h2" id="docker-toc" data-element="docker">Docker</li>
+            <li class="h2" id="chronos-cli-toc" data-element="chronos-cli">Chronos CLI</li>
+            <li class="h2" id="storing-event-data-toc" data-element="storing-event-data">Storing Event Data
+              <ul>
+                <li class="h3" data-element="to-sql-or-to-nosql-">To SQL, or to NoSQL?</li>
+                <li class="h3" data-element="timescaledb">TimescaleDB</li>
+                <li class="h3" data-element="pipelinedb">PipelineDB</li>
+              </ul>
+            </li>
+            <li class="h2" id="grafana-toc" data-element="grafana">Grafana</li>
+            <li class="h2" id="future-plans-toc" data-element="future-plans">Future Plans</li>
+            <li class="h2" id="about-us-toc" data-element="about-us">About Us</li>
+            <li class="h2" id="references-toc" data-element="references">References</li>
+          </ul>
+        </nav>
+      </div>
       <article>
         <div id='markdown'>
           <h1 id="case-study">Case Study</h1>
@@ -408,7 +421,7 @@
             <pre>
               <code class="language-bash">
 docker-compose up -d zookeeper
-<span class="hl-gray"><i>// (...5-10 seconds later)</i></span>
+<span class="hl-gray"><i>// 5-10 seconds later</i></span>
 docker-compose up
               </code>
             </pre>
@@ -464,6 +477,153 @@ docker-compose stop
               </tr>
             </tbody>
           </table>
+          <h2 id="storing-event-data">Storing Event Data</h2>
+          <p>Once the data goes through Kafka to the consumer, the consumer then writes the data to our databases. Thus, we had consider how we wanted to store event data given the following considerations:</p>
+          <ul>
+            <li>How can we store event data in a way that is efficient for a write heavy application?</li>
+            <li>How can we make data exploration easy for the developer?</li>
+            <li>How can we make it space effective?</li>
+          </ul>
+          <h3 id="to-sql-or-to-nosql-">To SQL, or to NoSQL?</h3>
+          <p>The first question we had to ask ourselves, &quot;how can we store data in a way that is efficient for a write heavy application,&quot; inevitably led us to the SQL vs NoSQL question. In our research we have generally found that streaming systems used for analytics utilize NoSQL. Reasons for this include:</p>
+          <ul>
+            <li>NoSQL performs better in write heavy applications</li>
+            <li>The schema of the event data doesn&#39;t have to be known in advance, which makes it more flexible</li>
+            <li>NoSQL is better at sharding than SQL</li>
+            <li>It is harder to scale SQL given the large number of events captured compared to NoSQL</li>
+          </ul>
+          <p>The typical scaling strategy when using NoSQL is to scale horizontally across a cluster of <em>N</em> servers where you have chopped the dataset into <em>N</em> partitions. This is especially useful when you are no longer able to scale vertically.</p>
+          <p>The chief difficulty for SQL is that since you are storing data for each action taken by a user, the eventual dataset in the database will be massive, so much so that it cannot reside just in memory and thus must persist on the disk as well. This also means that the indexes must reside on the disk as well, and thus any time we will need to update the data structure of our indexes, there will be quite a bit of disk I/O, which degrades performance.</p>
+          <p>One possible work-around for this is to “use smaller- or variable-sized pages.”[4] However, by doing this you will both increase disk fragmentation, as well as increase “the overhead of the ‘seek time’” “in the case of a spinning hard disk.” While you can get rid of a physical seek time by using an SSD, “they [SSDs] can only be read from or written to at the page-level granularity [8KB]” which means that even for an update less than that granularity, the SSD has to read from the disk to the buffer cache, perform any modifications, and then write to a new disk block (which will be 8KB). All this ultimately means that as we insert more data into a table, both the insert throughput will suffer and the variance in insert rate will go up drastically.</p>
+          <p>This shouldn’t come as a surprise; since we (usually) do not want to delete raw time-scale data, that means that the primary writes in a time-scale database are inserts instead of updates, which is more common in an OLTP database. NoSQL databases’ use of Log-structured merge (LSM) trees work are efficient for this problem as they “reduce the cost of making small writes by only performing larger append-only writes to disk” as opposed to in-place writes.</p>
+          <p>However, there are certain tradeoffs for choosing NoSQL over SQL, namely that there are higher memory requirements and poor support for secondary indexes. The former problem arises from the fact that since there is “no global index” within LSM trees, “there is no single ordering.” Thus to look-up a value for a key requires a more complex operation: first you must check memory for the latest version of the key. If it’s not there, then you have to check any on-disk tables to find the latest value associated with the key. While we can keep all indexes in memory to avoid this excessive disk I/O, that choice will increase our memory requirements.</p>
+          <p>As for the latter problem, this arises because since there is no “global sorted order” in LSM trees, they don’t “naturally support secondary indexes.” Systems try to emulate secondary indexes in a variety of ways, but it ultimately ends up “with the cost of requiring a larger scan among these keys at query time, thus supporting only items with a limited cardinality (e.g., discrete values, not numeric ones).”</p>
+          <p>Given the above problems, when we began this project we were still set on using a NoSQL database given the problems listed above. However, one appealing aspect of using a SQL database is ease of use: SQL is a powerful declarative language that, even according to Keen IO, is still the bar none when it comes to exploring data. Further, it is still more likely to be known by a variety of developers as opposed to the various querying languages found in NoSQL databases.[CITE] These benefits are right in line with our use case since we wanted to store our data for data exploration, and we want to appeal to as wide a developer audience as we can. However, it was only upon finding SQL databases designed for event data that we finally decided upon using SQL, more specifically TimescaleDB and PipelineDB.</p>
+          <h3 id="timescaledb">TimescaleDB</h3>
+          <p>TimescaleDB is a PostgresSQL extension that works out-of-the-box with the plugins and features developed by the Postgres community over the years. Timescale realized that when working with time-series data, “if the data [was] sorted by time, we would always be writing towards the ‘end’ of our dataset.” Thus we could keep the “actual working set of database pages rather small” and stash them in memory, and cache data for queries for recent intervals.</p>
+          <p>To overcome the problems above in using a SQL database for time-series data, Timescale used a chunking strategy where they split data into distinct tables via two dimensions: a time interval and a primary key. These individual chunks are then stored in separate tables which greatly reduces the size of indexes as they are only built across the smaller chunks rather than  a single giant table. This also means that properly sized chunks along with their B-trees can be stored entirely in memory which avoids the “swap-to-disk problem, while maintaining support for multiple indexes.” Once the chunks are partitioned by time, they can then be partitioned again by a primary key which leads to even smaller chunks that share a “time interval but are disjoint in terms of their primary key-space,” which is better for parallelization.</p>
+          <p>The current design of chunks is that they are created with a fixed time interval that then adapts “based on changes in data volumes in order to hit maximum target sizes.” This avoids the problem where data that arrives too early in the interval creates extended intervals (which are overly large), and also supports a more natural data drop interval (e.g., drop any data which is 15 days or older). Since the chunks are just database tables as opposed to tuples, when data is dropped it “avoids fragmentation…[and] the need for vacuuming.”</p>
+          <p>In Chronos we use TimescaleDB to store all of our raw event data for data exploration purposes. By doing this we allow developers to use the power of SQL for data exploration without having to sacrifice the performance degradation one typically sees with SQL databases when dealing with event data. However, there are two current problems Chronos faces when using TimescaleDB:
+          1) TimescaleDB currently has no horizontal scaling capabilities (i.e. sharding), which limits it to a single node. This isn&#39;t as immediate of a concern for Chronos since the system is built for greenfield applications where scaling isn&#39;t as immediate a concern. However, Timescale will begin running out sharding in 2019, so this will no longer be a problem.
+          2) TimescaleDB maxes out on its performance capabilities between 50-100TB of data. Any more will lead to degradation. Since Chronos can collect a large amount of data relatively quickly, especially if a greenfield application begins to rise in popularity, this is a concern. In future iterations, Chronos plans to implement a cold storage system that will move data from TimescaleDB that is older than a month old (see &quot;Future Plans&quot; below).</p>
+          <p>Each event type was stored in its own table where the various attributes of the event are stored in their own column. Initially we were undecided as to whether we should store the metadata in its own table, or store it as a JSON object into a JSONB column. Since storage efficiency is a concern for Chronos, we decided to see how the size would look if the metadata was stored in its own table as well as in a column. We set up tables to store link clicks in both fashions, as well as a metadata table.</p>
+          <p><code>link_clicks</code> table (with <code>metadata</code> column):</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Column Name</th>
+                <th>Values</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>id</td>
+                <td>SERIAL NOT NULL</td>
+              </tr>
+              <tr>
+                <td>link_text</td>
+                <td>TEXT</td>
+              </tr>
+              <tr>
+                <td>target_url</td>
+                <td>TEXT NOT NULL</td>
+              </tr>
+              <tr>
+                <td>time</td>
+                <td>TIMESTAMP NOT NULL DEFAULT NOW()</td>
+              </tr>
+              <tr>
+                <td>metadata</td>
+                <td>JSONB NOT NULL</td>
+              </tr>
+              <tr>
+                <td>local_time</td>
+                <td>TIMESTAMP NOT NULL</td>
+              </tr>
+            </tbody>
+          </table>
+          <p><code>link_clicks</code> table (no <code>metadata</code> column):</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Column Name</th>
+                <th>Values</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>id</td>
+                <td>SERIAL NOT NULL</td>
+              </tr>
+              <tr>
+                <td>link_text</td>
+                <td>TEXT</td>
+              </tr>
+              <tr>
+                <td>target_url</td>
+                <td>TEXT NOT NULL</td>
+              </tr>
+              <tr>
+                <td>time</td>
+                <td>TIMESTAMP NOT NULL DEFAULT NOW()</td>
+              </tr>
+              <tr>
+                <td>local_time</td>
+                <td>TIMESTAMP NOT NULL</td>
+              </tr>
+            </tbody>
+          </table>
+          <p><code>metadata</code> table:</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Column Name</th>
+                <th>Values</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>id</td>
+                <td>SERIAL NOT NULL</td>
+              </tr>
+              <tr>
+                <td>event_id</td>
+                <td>INTEGER NOT NULL()</td>
+              </tr>
+              <tr>
+                <td>url</td>
+                <td>TEXT NOT NULL</td>
+              </tr>
+              <tr>
+                <td>user_agent</td>
+                <td>TEXT NOT NULL</td>
+              </tr>
+              <tr>
+                <td>page_title</td>
+                <td>TEXT NOT NULL</td>
+              </tr>
+              <tr>
+                <td>cookie_allowed</td>
+                <td>TEXT NOT NULL</td>
+              </tr>
+              <tr>
+                <td>language</td>
+                <td>TEXT NOT NULL</td>
+              </tr>
+              <tr>
+                <td>event_type</td>
+                <td>EVENT* NOT NULL</td>
+              </tr>
+              <tr>
+                <td>time</td>
+                <td>TIMESTAMPZ NOT NULL</td>
+              </tr>
+            </tbody>
+          </table>
+          <p><i>*<code>EVENT</code> is a TYPE that contains a list of all event types</i></p>
+          <p>We then inserted 50 rows of data in each table and used TimescaleDB’s <code>hypertable_relation_size()</code> function on each of them. What we found was that each table’s bite size (excluding indexes and TOAST) was 49,152 bytes. This means by storing the JSON in a <code>metadata</code> column, we effectively halve the storage space. Since Chronos is trying to be as storage efficient as possible, this was a very good trade off. While this does make querying the metadata slightly harder, we felt this was okay given the storage benefits.</p>
+          <p>With TimescaleDB, Chronos now provides an easy way for developers to explore their data to find interesting trends. However, if a developer wants to see the same query at various times, the query would have to be executed manually for each window of duration. What we wanted Chronos to do was provide real-time feedback for any queries that the developer specifies so that the querying process is &quot;automated&quot;. For this, we use our second time-series database: PipelineDB.</p>
+
 
         </div>
       </article>
