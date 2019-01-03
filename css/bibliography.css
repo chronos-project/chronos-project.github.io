@@ -54,8 +54,10 @@ body > nav a img {
   width: 31vw;
   margin-top: 250px;
   position: sticky;
-  top: 20px;
+  top: 0px;
   align-self: flex-start;
+  overflow-y: auto;
+  height: 100vh;
 }
 
 #toc > ul {
@@ -136,6 +138,10 @@ main p {
   line-height: 30px;
 }
 
+p + .resource {
+  margin-top: 15px;
+}
+
 main p:last-of-type {
   margin-bottom: 80px;
 }
@@ -143,6 +149,8 @@ main p:last-of-type {
 em {
   font-style: italic;
 }
+
+#markdown { margin-bottom: 100px; }
 
 /* ==== Footer ==== */
 footer {

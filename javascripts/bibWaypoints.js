@@ -36,13 +36,100 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  let w2 = new Waypoint({
+  let dockerWaypoint = new Waypoint({
     element: document.getElementById('docker'),
-    handler: () => {
+    handler: (direction) => {
       removeActive(titles);
+      let tocReference;
 
-      const tocReference = document.getElementById('docker-toc');
+      if (direction === 'down') {
+        tocReference = document.getElementById('docker-toc');
+      } else {
+        tocReference = document.getElementById('devops-toc');
+      }
+
       addActive(tocReference);
     },
+  });
+
+  let eventDataWaypoint = new Waypoint({
+    element: document.getElementById('event-data-metadata-analytics'),
+    handler: (direction) => {
+      removeActive(titles);
+      let tocReference;
+
+      if (direction === 'down') {
+        tocReference = document.getElementById('event-data-metadata-analytics-toc');
+      } else {
+        tocReference = document.getElementById('docker-toc');
+      }
+
+      addActive(tocReference);
+    },
+  });
+
+  let eventDBWaypoint = new Waypoint({
+    element: document.getElementById('event-data-metadata-analytics'),
+    handler: (direction) => {
+      removeActive(titles);
+      let tocReference;
+
+      if (direction === 'down') {
+        tocReference = document.getElementById('event-series-time-series-databases-toc');
+      } else {
+        tocReference = document.getElementById('event-data-metadata-analytics-toc');
+      }
+
+      addActive(tocReference);
+    },
+  });
+
+  let eventStreamingWaypoint = new Waypoint({
+    element: document.getElementById('event-streaming-architecture'),
+    handler: (direction) => {
+      removeActive(titles);
+      let tocReference;
+
+      if (direction === 'down') {
+        tocReference = document.getElementById('event-streaming-architecture-toc');
+      } else {
+        tocReference = document.getElementById('event-series-time-series-databases-toc');
+      }
+
+      addActive(tocReference);
+    },
+  });
+
+  let kafkaWaypoint = new Waypoint({
+    element: document.getElementById('kafka'),
+    handler: (direction) => {
+      removeActive(titles);
+      let tocReference;
+
+      if (direction === 'down') {
+        tocReference = document.getElementById('kafka-toc');
+      } else {
+        tocReference = document.getElementById('event-streaming-architecture-toc');
+      }
+
+      addActive(tocReference);
+    },
+  });
+
+  let testingWaypoint = new Waypoint({
+    element: document.getElementById('testing-and-benchmarking'),
+    handler: (direction) => {
+      removeActive(titles);
+      let tocReference;
+
+      if (direction === 'down') {
+        tocReference = document.getElementById('testing-and-benchmarking-toc');
+      } else {
+        tocReference = document.getElementById('kafka-toc');
+      }
+
+      addActive(tocReference);
+    },
+    offset: 50,
   });
 })
