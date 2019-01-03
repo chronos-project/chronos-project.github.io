@@ -226,5 +226,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
       addActive(tocReference);
     },
+    offset: 50,
   });
 })
