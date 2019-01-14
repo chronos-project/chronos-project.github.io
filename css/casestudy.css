@@ -172,7 +172,7 @@ article ul { list-style: disc; }
   text-align: center;
 }
 
-i { font-style: italic; }
+i, em { font-style: italic; }
 
 article p > code,
 table code {
