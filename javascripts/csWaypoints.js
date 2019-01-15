@@ -52,6 +52,22 @@ document.addEventListener('DOMContentLoaded', () => {
     },
   });
 
+  let manualWaypoint = new Waypoint({
+    element: document.getElementById('manual-implementation'),
+    handler: (direction) => {
+      removeActive(titles);
+      let tocReference;
+
+      if (direction === 'down') {
+        tocReference = document.getElementById('manual-implementation-toc');
+      } else {
+        tocReference = document.getElementById('what-is-event-data-toc');
+      }
+
+      addActive(tocReference);
+    },
+  });
+
   let solutionsWaypoint = new Waypoint({
     element: document.getElementById('existing-solutions'),
     handler: (direction) => {
@@ -61,7 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (direction === 'down') {
         tocReference = document.getElementById('existing-solutions-toc');
       } else {
-        tocReference = document.getElementById('what-is-event-data-toc');
+        tocReference = document.getElementById('manual-implementation-toc');
       }
 
       addActive(tocReference);
