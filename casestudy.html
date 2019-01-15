@@ -197,42 +197,41 @@
           </ol>
           <p>The main difficulty in capturing and using event data is that since for so long they&#39;ve been seen to exist implicitly in an application they don&#39;t have a proper place within an application's data architecture. Further, since events are constantly happening in real time, any system for capturing and storing event data needs to be able to map to this stream of events and store data in an apropos way.</p>
           <h2 id="manual-implementation">Manual Implementation</h2>
-          <p>First, we should explore how we would go about implementing an event capturing system manually. The first question we might ask ourselves is “what kind of database should we use to store our event data?” When implementing our storage system, there are three considerations for greenfield applications:</p>
+          <p>First, we should explore how you would go about implementing an event capturing system manually. The first question you might ask yourself is “what kind of database should I use to store my event data?” When implementing your storage system, there are three considerations for greenfield applications:</p>
           <ul>
-            <li>How can we store event data in a way that is efficient for a write heavy application?</li>
-            <li>How can we make data exploration easy for the developer?</li>
-            <li>How can we make it space effective?</li>
+            <li>How can you store event data in a way that is efficient for a write heavy application?</li>
+            <li>How can you make data exploration easy for a developer?</li>
+            <li>How can you make it space effective?</li>
           </ul>
-          <h3 id="to-sql-or-to-nosql-">To SQL, or to NoSQL?</h3>
-          <p>The first concern, “how can we store data in a way that is efficient for write heavy application,” inevitably leads to the SQL vs NoSQL question. Most streaming systems used for analytics utilize NoSQL. Reasons include:</p>
+          <h3 id="database-selection">Database Selection</h3>
+          <p>The first concern, “how can you store data in a way that is efficient for write heavy application,” inevitably leads to the SQL vs NoSQL question. Most streaming systems used for analytics utilize NoSQL. Reasons include:</p>
           <ul>
             <li>NoSQL performs better in write heavy applications</li>
             <li>The schema of the event data doesn&#39;t have to be known in advance, which makes it more flexible</li>
             <li>NoSQL is better at horizontal scaling (sharding) than SQL</li>
             <li>It is harder to scale SQL given the large number of events captured compared to NoSQL</li>
           </ul>
-          <p>The typical scaling strategy when using NoSQL is to scale horizontally across a cluster of <em>N</em> servers where you have chopped the dataset into <em>N</em> partitions. This is especially useful when you are no longer able to scale vertically.</p>
-          <p>The chief difficulty with using SQL for event data is that since you are storing data for each action taken by a user, the eventual dataset in the database will be massive, so much so that it cannot reside just in memory and thus must persist on the disk as well. This also means that the indexes must reside on the disk as well, and thus any time we will need to update the data structure of our indexes, there will be quite a bit of disk I/O, which degrades performance. This shouldn’t come as a surprise; since we (usually) do not want to delete raw event data, that means that the primary writes to a database are inserts instead of updates (the latter being more common in an OLTP database).</p>
-          <p>Another difficulty when using SQL for storing event data is that SQL requires each record that is inserted into a table to conformed to a pre-defined schema. While it is possible to change the schema, this would require us to take the database offline in order to make any changes. If we wanted to manually define the events we would like to capture for our greenfield application, then we will also need to take time defining the structure of the tables on the database layer of our pipeline.</p>
-          <p>However, there are some definite advantages to using SQL for capturing our event data. SQL is a powerful declarative language that, even according to analytics companies such as Keen IO (who use Cassandra), is still the bar none when it comes to exploring data — an important advantage given that we’re building our system precisely to <em>explore</em> captured data.</p>
-          <p>In contrast, NoSQL databases are far more suited for event data. One reason is the use of Log-structured merge (LSM) trees by many NoSQL databases such as MongoDB (WiredTiger), Cassandra, Google BigTable, and more. LSMs are more efficient for large number of writes since they “reduce the cost of making small writes by only performing larger append-only writes to disk” as opposed to in-place writes.[4]</p>
-          <p>In addition to this, NoSQL databases don’t require us to define a schema before hand, which means we can change the structure of our event data on the fly without having to rework the back end. This allows for dynamic updating to our data models without coupling us to whatever back end we use.</p>
-          <p>This doesn’t mean any NoSQL database will do, though. A key-value store such as Redis really isn’t ideal for storing event data since we want to group our event data into collections together by the type of event it is. Further, we want to be able to query our data and explore it in all sorts of way, similar to how we can in SQL.</p>
-          <p>While many analytics companies use columnar databases to store event data given their ability to analyze large data sets, a document store would suffice for a greenfield application. This is because our event capturing system is single tenant — it is just for <em>our</em> application, and so we don’t expect to need to examine nearly as a large of a dataset as an analytics company.</p>
-          <p>However, there are certain tradeoffs for choosing NoSQL over SQL, namely that there are higher memory requirements and poor support for secondary indexes, both of which are a consequence of using LSM trees as an underlying data-structure (for those NoSQL databases that use them). That having been said, since we don’t exactly know what we’ll be doing with our event data yet, losing secondary index support is probably an okay tradeoff. Further, while NoSQL databases do require more memory, we can likely afford any costs to up the memory on our node to support a document store. Though we are losing the power of the SQL language for data exploration, SQL’s chief difficulty with storing event data really does not make it a viable option since it will degrade far quicker in performance. Thus, for our hypothetical data pipeline, a NoSQL database such as MongoDB would be a fine choice.</p>
+          <p>Since you are capturing events for the sake of data exploration, your first instinct may be to use a relational database. SQL is a powerful declarative language that, even according to analytics companies such as <a href="https://keen.io/">Keen IO</a> (who use Cassandra), is still the bar none when it comes to exploring data. However, you’ll quickly notice a couple of drawbacks when using a relational database.</p>
+          <p>The chief difficulty with using SQL for event data is that since you are storing data for each action taken by a user, the eventual dataset in the database will be massive, so much so that it cannot reside just in memory and thus must persist on the disk as well. This also means that the indexes must reside on the disk as well, and thus any time you will need to update the data structure of our indexes, there will be quite a bit of disk I/O, which degrades performance. This shouldn’t come as a surprise; since you (usually) do not want to delete raw event data, that means that the primary writes to a database are inserts instead of updates (the latter being more common in an OLTP database).</p>
+          <p>Another difficulty when using SQL for storing event data is that SQL requires each record that is inserted into a table to conformed to a pre-defined schema. While it is possible to change the schema, this would require you to take the database offline in order to make any changes. If you wanted to manually define the events you would like to capture for our greenfield application, then you will also need to take time defining the structure of the tables on the database layer of your pipeline.</p>
+          <p>What you need, then, is a database that is able to perform well with a write-heavy application where we are constantly appending schema-less data. One option is to use a database whose underlying structure is a Log-structured Merge (LSM) tree, such as a document store (MongoDB) or a columnar database (Cassandra). LSMs are more efficient for large number of writes since they “reduce the cost of making small writes by only performing larger append-only writes to disk” as opposed to in-place writes.[4] In addition to this, these databases shouldn’t require you to define a schema before hand, which means you can change the structure of your event data on the fly without having to rework the back end. This allows for dynamic updating to your data models without coupling us to whatever back end we use.</p>
+          <p>While many analytics companies use columnar databases to store event data given their ability to analyze large data sets, a document store would suffice for a greenfield application. This is because your event capturing system is single tenant — it is just for <em>your</em> application, and so you don’t expect to need to examine nearly as a large of a dataset as an enterprise event-streaming system.</p>
+          <p>However, there are certain tradeoffs for choosing a LSM document store, namely that there are higher memory requirements and poor support for secondary indexes, both of which are a consequence of the underlying data-structure. That having been said, since you don’t exactly know what you&#39;ll be doing with our event data yet, losing secondary index support is an acceptable tradeoff. Further, a document store will require more memory than a relational database.</p>
+          <p>Though we are losing the power of the SQL language for data exploration, SQL’s chief difficulty with storing event data really does not make it a viable option since it will degrade far quicker in performance. Thus, for our hypothetical event capturing pipeline, a document store such as MongoDB would be a fine choice.</p>
+          <p>As you explore your data, you’re eventually going to discover recurring trends in how users interact with your application. If you wanted to track these patterns in “real-time” then you’ll need a way to aggregate the incoming event data into materialized views for analysis. A naive solution would be to set up various chron-jobs that run queries over the database to aggregate data. There are two problems with this approach. First, you will have to run your query against the entire dataset in order to filter it by whatever window of time you wish to use (e.g. last 5 minutes, 1 hour, 3 days, etc). These kinds of queries will become more expensive as our dataset grows. Second, this isn’t actually “real-time” since we are not continuously running a query, but rather just running a new query every so often. For example, if you wanted to know how many unique visitors came to your site within the last hour, at time <code>a</code> your “real-time” view would display one set of information. Until that view was materialized again an hour later at time <code>b</code>, the data would remain the same even though other users have now visited your site. In other words, you would be limiting yourself to set windows instead of sliding windows.</p>
+          <p>Instead, you could use a stream processor such as Apache Spark that will take the data while it’s still in a stream and aggregate it in whichever way you need. This would also allow you to use sliding windows to materialize actual real-time feedback instead of snapshots on the hour. Lastly, you could also store whichever views you wanted into your database in a new collection.</p>
           <h3 id="code-coupling">Code Coupling</h3>
-          <p>Currently our architecture may look something as follows:</p>
-          <div class="image"><img src="images/diagrams/case_study_arch_1.png" alt="A simple data pipeline" /></div>
-          <p>There are some definite benefits to this design: it’s simple, easy to understand, and straightforward. However, it’s limited in what it can do. For example, as we explore our data we’re eventually going to discover recurring trends in how users interact with our application. If we wanted to track these patterns in “real-time,” currently we would have to manually run the query every so often, which for obvious reasons is not practical. Instead, we could use a stream processor such as Apache Spark to aggregate our incoming data in whichever way we need for us, allowing for real time feedback. We could store any materialized results in our database as well:</p>
-          <div class="image"><img src="images/diagrams/case_study_arch_2.png" alt="Our pipeline, now with streaming aggregation" /></div>
-          <p>Still, this isn’t too complicated. But we start noticing a problem: each piece of our architecture is tightly bound to at least one other piece. This is problematic because if one part goes down it could have a ripple effect throughout the whole system.</p>
-          <p>This problem will only increase as we continue to develop our pipeline. As our data exploration continues, we’ll likely find a set number of queries that we want reported to us on a daily basis showing daily analysis of user behavior within the application. Rather than manually running these queries on our server, we could have a worker run them and send the results to a job processing queue to have the information emailed to us.</p>
-          <p>Further, since we want our application to be space effective, we likely don’t need to keep any data in MongoDB that is more than a month old. While we could take data is older than a month and aggregate it in some way to save on space, we’d also lose all the raw data in doing so. Instead, we could extract the data and compress it down as much as possible and store it on disk to be later sent to a proprietary service once we’ve outgrown our own event capturing system. This would require some kind of worker to extract the data from MongoDB and then perform the compression and storage:</p>
+          <p>Now that you have your database selected, you can continue with the rest of the event-processing pipeline. For the web server and API server, you don’t have to be as too picky. You could use HAProxy for the web layer, and NodeJS as your API server that receives the events sent by the client.</p>
+          <p>Currently the architecture may look something as follows:</p>
+          <div class="image"><img src="images/diagrams/case_study_arch_2.png" alt="Our pipeline with streaming aggregation" /></div>
+          <p>Already it has taken you quite some time to research and set up this architecture. However, you also may start noticing a problem: each piece of your architecture is tightly bound to at least one other piece. This is problematic because if one part goes down it could have a ripple effect throughout the whole system.</p>
+          <p>This problem will only increase as you continue to develop our event-processing pipeline. As your data exploration continues, you’ll likely find queries that you wanted reported to you on a daily basis, perhaps showing data such as the total number of unique visitors to your application that day, what the peak hours of usage were, the most visited pages, etc. We could run these queries via a chron-job set early in the morning (when user activity is low), and then have a worker send the data off to be e-mailed to us.</p>
+          <p>Further, since you want your application to be space effective, you likely don’t need to keep any data in MongoDB after some time duration. While you could take data that is older and aggregate it in some way to save on space, you'd also lose all the raw data in doing so. Instead, you could extract the data and compress it down as much as possible and store it on disk to be later sent to a some other service once you've outgrown your own event capturing system. This would require some kind of worker to extract the data from MongoDB and then perform the compression and storage:</p>
           <div class="image"><img src="images/diagrams/case_study_arch_3.png" alt="A very coupled system" /></div>
           <p>The pieces have become so entwined with one another that to have them communicate might involve a series of workers and other steps that, if any other part of the system fails, could also affect this communication. This problem will just continue to grow as our application does as well.</p>
           <p>The way to decouple the pieces of architecture from one another is to use a messaging queue as a central piece which facilitates the communication of the various parts of the system. The messaging queue uses a &quot;Pub/Sub architecture&quot; where producers of data send messages to a topic and consumers of data would read those messages from the same topic. This also modularizes our system so that it is easy to add new producers and consumers as we need them.</p>
           <div class="image"><img src="images/diagrams/case_study_arch_4.png" alt="A modularized system" /></div>
-          <p>While our streaming system is now complete, we’ve spent a lot of time researching various components, implementing them to work together, and testing them to make sure they work — and this is only on the backend! We haven’t gone and created our event tracking system for the client side yet. It should be clear by now why manually setting this system up for a greenfield application where we aren’t even completely sure how we’ll be using our event data yet is inefficient.</p>
+          <p>While your streaming system is now complete, you’ve spent a lot of time researching various components, implementing them to work together, and testing them to make sure they work — and this is only on the backend! You haven’t gone and created your event tracking system for the client side yet. It should be clear by now why manually setting this system up for a greenfield application where you aren’t even completely sure how you’ll be using your event data yet is inefficient.</p>
           <h2 id="existing-solutions">Existing Solutions</h2>
           <p>Luckily, there are already existing solutions for a developer who wishes to capture, store, and analyze event data. However, many of these solutions are proprietary in nature and while they could be used for greenfield applications, they are better suited for larger or enterprise level applications. With these solutions we generally found the following problems:</p>
           <ol>
@@ -257,14 +256,14 @@
           <div class="code-block">
             <pre>
               <code class="language-shell">
-    # set up proper JAVA_HOME for mac
-    export JAVA_HOME=$(/usr/libexec/java_home)
+<span class="hl-gray"><i># set up proper JAVA_HOME for mac</i></span>
+<span class="hl-purple">export</span> JAVA_HOME=<span class="hl-green">$(/usr/libexec/java_home)</span>
 
-    git clone https://github.com/Codecademy/EventHub.git
-    cd EventHub
-    export EVENT_HUB_DIR=`pwd`
-    mvn -am -pl web clean package
-    java -jar web/target/web-1.0-SNAPSHOT.jar
+git clone https://github.com/Codecademy/EventHub.git
+cd EventHub
+<span class="hl-purple">export</span> EVENT_HUB_DIR=<span class="hl-green">`pwd`</span>
+mvn -am -pl web clean package
+java -jar web/target/web-1.0-SNAPSHOT.jar
               </code>
             </pre>
           </div>
@@ -276,63 +275,63 @@
           <div class="code-block">
             <pre>
               <code class="language-js">
-eventHub.track(&quot;signup&quot;, {
-  property_1: &#39;value1&#39;,
-  property_2: &#39;value2&#39;
+<span class="hl-red">eventHub</span>.<span class="hl-blue">track</span>(<span class="hl-green">&quot;signup&quot;</span>, {
+  property_1: <span class="hl-green">&#39;value1&#39;</span>,
+  property_2: <span class="hl-green">&#39;value2&#39;</span>
 });
               </code>
             </pre>
           </div>
           <p>There are two other drawbacks of EventStore worth mentioning: firstly, it uses <a href="https://github.com/fusesource/hawtjournal/" target="_blank">HawtJournal</a> as journal storage, which uses a Java API for accessing data. While not to demean HawtJournal, it is likely not nearly as well known as SQL or NoSQL databases and thus may make data exploration for a greenfield application quite a nuisence. Secondly, EventHub has been abandoned for 5 years now, so support would likely be totally absent.</p>
           <h3 id="countly-community-edition">Countly Community Edition</h3>
-          <p>Given the problems with EventHub, another option is <a href="https://github.com/Countly/countly-server" target="_blank">Countly&#39;s community edition</a> (open source). Countly allows not only for a quick manual setup on our own server, but also provides a one-click setup option for deploying on Digital Ocean. Further, we can deploy Countly via Docker if that better suits our needs. Once deployed, it is recommended to assign a DNS A record to our Countly server (though this is optional), and we must still configure email delivery so that emails from the server are not caught by spam filters.
-          Countly’s tracker is a JavaScrpit SDK that tracks the following events automatically:</p>
+          <p>Another option is <a href="https://github.com/Countly/countly-server" target="_blank">Countly&#39;s community edition</a> (open source). Countly allows not only for a quick manual setup on your own server, but also provides a one-click setup option for deploying on Digital Ocean. Further, you can deploy Countly via Docker if that better suits your needs. Once deployed, it is recommended to assign a DNS A record to your Countly server (though this is optional), and you must still configure email delivery so that emails from the server are not caught by spam filters.</p>
+          <p>Countly’s tracker is a JavaScrpit SDK that tracks the following events automatically:</p>
           <ul>
             <li>sessions</li>
             <li>pageviews (both for tradition websites and single page applications)</li>
             <li>link clicks (both on a link or those on a parent node)</li>
             <li>form submissions</li>
           </ul>
-          <p>Two other events, mouse clicks and mouse scrolls, are only automatically captured in the enterprise edition. To use the tracker, we must install the tracker library (which can be done in a variety of ways including CDNs) and generate an <code>APP_KEY</code> by creating a website for tracking on the Countly Dashboard UI. Once this is done, we can set up the tracker configuration within a script tag, as well as manually implement any other event we’d like to capture other than the defaults:</p>
+          <p>Two other events, mouse clicks and mouse scrolls, are only automatically captured in the enterprise edition, which costs money and is not open source. To use the tracker, you must install the tracker library (which can be done in a variety of ways including CDNs) and generate an <code>APP_KEY</code> by creating a website for tracking on the Countly Dashboard UI. Once this is done, you can set up the tracker configuration within a script tag, as well as manually implement any other event you’d like to capture other than the defaults:</p>
           <div class="code-block">
             <pre>
               <code class="language-javascript">
-&lt;script type=&#39;text/javascript&#39;&gt;
+&lt;<span class="hl-red">script</span> <span class="hl-orange">type</span>=<span class="hl-green">&#39;text/javascript&#39;</span>&gt;
 
-var Countly = Countly || {};
-Countly.q = Countly.q || [];
+<span class="hl-purple">var</span> Countly <span class="hl-teal">=</span> Countly <span class="hl-teal">||</span> {};
+<span class="hl-red">Countly</span>.<span class="hl-red">q</span> <span class="hl-teal">=</span> <span class="hl-red">Countly</span>.<span class="hl-red">q</span> <span class="hl-teal">||</span> [];
 
-Countly.app_key = &quot;YOUR_APP_KEY&quot;;
-Countly.url = &quot;https://yourdomain.com&quot;;
+<span class="hl-red">Countly</span>.<span class="hl-red">app_key</span> <span class="hl-teal">=</span> <span class="hl-green">&quot;YOUR_APP_KEY&quot;</span>;
+<span class="hl-red">Countly</span>.<span class="hl-red">url</span> <span class="hl-teal">=</span> <span class="hl-green">&quot;https://yourdomain.com&quot;</span>;
 
-Countly.q.push([&#39;track_sessions&#39;]);
-Countly.q.push([&#39;track_pageview&#39;]);
+<span class="hl-red">Countly</span>.<span class="hl-red">q</span>.<span class="hl-teal">push</span>([<span class="hl-green">&#39;track_sessions&#39;</span>]);
+<span class="hl-red">Countly</span>.<span class="hl-red">q</span>.<span class="hl-teal">push</span>([<span class="hl-green">&#39;track_pageview&#39;</span>]);
 
-// Uncomment the following line to track web heatmaps (Enterprise Edition)
+<span class="hl-gray"><i>// Uncomment the following line to track web heatmaps (Enterprise Edition)
 // Countly.q.push([&#39;track_clicks&#39;]);
 
 // Uncomment the following line to track web scrollmaps (Enterprise Edition)
 // Countly.q.push([&#39;track_scrolls&#39;]);
 
-// Load Countly script asynchronously
-(function() {
-    var cly = document.createElement(&#39;script&#39;); cly.type = &#39;text/javascript&#39;;
-    cly.async = true;
-    // Enter url of script here (see below for other option)
-    cly.src = &#39;https://cdn.jsdelivr.net/npm/countly-sdk-web@latest/lib/countly.min.js&#39;;
-    cly.onload = function(){Countly.init()};
-    var s = document.getElementsByTagName(&#39;script&#39;)[0]; s.parentNode.insertBefore(cly, s);
+// Load Countly script asynchronously</i></span>
+(<span class="hl-purple">function</span>() {
+    <span class="hl-purple">var</span> cly <span class="hl-teal">=</span> <span class="hl-red">document</span>.<span class="hl-teal">createElement</span>(&#39;script&#39;); <span class="hl-red">cly</span>.<span class="hl-red">type</span> = &#39;text/javascript&#39;;
+    <span class="hl-red">cly</span>.<span class="hl-red">async</span> <span class="hl-teal">=</span> <span class="hl-orange">true</span>;
+    <span class="hl-gray"><i>// Enter url of script here (see below for other option)</i></span>
+    <span class="hl-red">cly</span>.<span class="hl-red">src</span> <span class="hl-teal">=</span> <span class="hl-green">&#39;https://cdn.jsdelivr.net/npm/countly-sdk-web@latest/lib/countly.min.js&#39;</span>;
+    <span class="hl-red">cly</span>.<span class="hl-blue">onload</span> <span class="hl-teal">=</span> <span class="hl-purple">function</span>(){<span class="hl-red">Countly</span>.<span class="hl-blue">init</span>()};
+    <span class="hl-purple">var</span> s <span class="hl-teal">=</span> <span class="hl-red">document</span>.<span class="hl-teal">getElementsByTagName</span>(<span class="hl-green">&#39;script&#39;</span>)[<span class="hl-orange">0</span>]; <span class="hl-red">s</span>.<span class="hl-red">parentNode</span>.<span class="hl-teal">insertBefore</span>(cly, s);
 })();
-&lt;/script&gt;
+&lt;/<span class="hl-red">script</span>&gt;
               </code>
             </pre>
           </div>
           <div class="code-block">
             <pre>
               <code class="language-javascript">
-&lt;script type=&#39;text/javascript&#39;&gt;
-//send event on button click
-function clickEvent(ob){
+&lt;<span class="hl-red">script</span> <span class="hl-orange">type</span>=<span class="hl-green">&#39;text/javascript&#39;</span>&gt;
+<span class="hl-gray"><i>//send event on button click</i></span>
+<span class="hl-purple">function</span> clickEvent(ob){
     Countly.q.push([&#39;add_event&#39;,{
         key:&quot;asyncButtonClick&quot;,
         segmentation: {
@@ -340,24 +339,24 @@ function clickEvent(ob){
         }
     }]);
 }
-&lt;/script&gt;
+&lt;/<span class="hl-red">script</span>&gt;
 &lt;input type=&quot;button&quot; id=&quot;asyncTestButton&quot; onclick=&quot;clickEvent(this)&quot; value=&quot;Test Button&quot;&gt;
               </code>
             </pre>
           </div>
           <p class="caption"><em>Truncated examples from the <a href="https://resources.count.ly/docs/countly-sdk-for-web" target="_blank">Countly JavaScript SDK documentation</a></em></p>
-          <p>Since Countly must be deployed on our own server, we have access to all of our data (which is stored in MongoDB). To querying the database easier, Countly UI can also use a plugin to explore the data within the database. However, the community edition only stores data in an aggregated format so as to increase the speed of queries and decrease storage space. This means in order to get access to raw data, we must use the enterprise edition. Further, many of the UI features also require an enterprise edition to be used (e.g. automated push notifications, retention, user flows, custom dashboards, etc). Lastly, since Countly’s doesn’t utilize a modularized architecture, if we ever wanted to expand our Countly server to use other software, we would have to deal with any implementation issues via code coupling, requiring us to have a good grasp on the overall structure of the codebase.</p>
+          <p>Since Countly must be deployed on your own server, you have access to all of your data (which is stored in MongoDB). To make querying the database easier, the Countly UI can also use a plugin to explore the database. However, the community edition only stores data in an aggregated format so as to increase the speed of queries and decrease storage space. This means in order to get access to raw data, you must use the enterprise edition. Further, many of the UI features also require an enterprise edition to be used (e.g. automated push notifications, retention, user flows, custom dashboards, etc). Lastly, since Countly doesn’t utilize a modularized architecture, if you ever wanted to expand your Countly server to use other software, you would have to deal with any implementation issues via code coupling, requiring you to have a good grasp on the overall structure of the codebase.</p>
           <h3 id="chronos">Chronos</h3>
-          <p>For Chronos to be an alternative in this space, it must solve the problems listed above as well as provide some benefits compared to the existing solutions. Chronos addresses all 5 of these problems:</p>
+          <p>Chronos offers a different set of tradeoffs that automates many of the pains of a manual implementation, but allows for control and ownership of an open course solution. Chronos:</p>
           <ol>
-            <li>Chronos is open source, and thus free to use</li>
-            <li>Data only exists on the server you host Chronos on and so you don&#39;t have to fear its security</li>
-            <li>Chronos will never sample your data since it&#39;s just an infrastructure</li>
-            <li>Chronos provides access to your raw data</li>
-            <li>Chronos provides a config file that specifies which events you&#39;d like to capture: everything else is automated</li>
+            <li>Is open source, and thus free to use</li>
+            <li>Keeps data only on the server you host Chronos on</li>
+            <li>Will never sample your data</li>
+            <li>Provides access to your raw data as well as aggregated views in real-time</li>
+            <li>Provides a config file that specifies which events you&#39;d like to capture: everything else is automated</li>
           </ol>
           <p>In addition to this, Chronos can visualize any queries over the data. We also wanted to make sure that Chronos would be space efficient since a greenfield application shouldn&#39;t be spending lots of money on their own server to collect data.</p>
-          <h2 id="capturing-events">Capturing Events</h2>
+          <h2 id="capturing-events">Chronos: Capturing Events</h2>
           <p>Chronos captures events on the client side by using a <code>tracker.js</code> file. The tracker itself is compiled from multiple files by using Browserify and automates the capturing of the following events:</p>
           <ul>
             <li>pageviews</li>
