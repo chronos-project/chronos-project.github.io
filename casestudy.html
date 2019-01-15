@@ -30,9 +30,14 @@
                 <li class="h3" data-element="streams-and-tables">Streams and Tables</li>
               </ul>
             </li>
+            <li class="h2" id="manual-implementation-toc" data-element="manual-implementation">Manual Implementation
+              <ul>
+                <li class="h3" data-element="database-selection">Database Selection</li>
+                <li class="h3" data-element="code-coupling">Code Coupling</li>
+              </ul>
+            </li>
             <li class="h2" id="existing-solutions-toc" data-element="existing-solutions">Existing Solutions
               <ul>
-                <li class="h3" data-element="yandex-metrica">Yandex Metrica</li>
                 <li class="h3" data-element="eventhub">EventHub</li>
                 <li class="h3" data-element="countly-community-edition">Countly Community Edition</li>
                 <li class="h3" data-element="chronos">Chronos</li>
@@ -47,7 +52,6 @@
             </li>
             <li class="h2" id="api-server-toc" data-element="api-server">API Server
               <ul>
-                <li class="h3" data-element="code-coupling">Code Coupling</li>
                 <li class="h3" data-element="which-queue-to-choose">Which Queue to Choose</li>
               </ul>
             </li>
@@ -56,7 +60,6 @@
             <li class="h2" id="chronos-cli-toc" data-element="chronos-cli">Chronos CLI</li>
             <li class="h2" id="storing-event-data-toc" data-element="storing-event-data">Storing Event Data
               <ul>
-                <li class="h3" data-element="to-sql-or-to-nosql-">To SQL, or to NoSQL?</li>
                 <li class="h3" data-element="timescaledb">TimescaleDB</li>
                 <li class="h3" data-element="pipelinedb">PipelineDB</li>
               </ul>
@@ -331,16 +334,16 @@ java -jar web/target/web-1.0-SNAPSHOT.jar
               <code class="language-javascript">
 &lt;<span class="hl-red">script</span> <span class="hl-orange">type</span>=<span class="hl-green">&#39;text/javascript&#39;</span>&gt;
 <span class="hl-gray"><i>//send event on button click</i></span>
-<span class="hl-purple">function</span> clickEvent(ob){
-    Countly.q.push([&#39;add_event&#39;,{
-        key:&quot;asyncButtonClick&quot;,
+<span class="hl-purple">function</span> <span class="hl-blue">clickEvent</span>(ob){
+    <span class="hl-red">Countly</span>.<span class="hl-red">q</span>.<span class="hl-teal">push</span>([<span class="hl-green">&#39;add_event&#39;</span>,{
+        key:<span class="hl-green">&quot;asyncButtonClick&quot;</span>,
         segmentation: {
-            &quot;id&quot;: ob.id
+            <span class="hl-green">&quot;id&quot;</span>: <span class="hl-red">ob</span>.<span class="hl-red">id</span>
         }
     }]);
 }
 &lt;/<span class="hl-red">script</span>&gt;
-&lt;input type=&quot;button&quot; id=&quot;asyncTestButton&quot; onclick=&quot;clickEvent(this)&quot; value=&quot;Test Button&quot;&gt;
+&lt;<span class="hl-red">input</span> <span class="hl-orange">type</span>=<span class="hl-green">&quot;button&quot;</span> <span class="hl-blue">id</span>=<span class="hl-green">&quot;asyncTestButton&quot;</span> <span class="hl-orange">onclick</span>=<span class="hl-green">&quot;clickEvent(this)&quot;</span> <span class="hl-orange">value</span>=<span class="hl-green">&quot;Test Button&quot;</span>&gt;
               </code>
             </pre>
           </div>
@@ -424,7 +427,7 @@ java -jar web/target/web-1.0-SNAPSHOT.jar
         <span class="hl-red">"target_url"</span>: <span class="hl-green">"foo.com/images"</span>,
         <span class="hl-red">"client_time"</span>: <span class="hl-green">"2018-12-15 00:34:03.8+00</span>"
       },
-      <span class="hl-gray">// Many more events...</span>
+      <span class="hl-gray"><i>// Many more events...</i></span>
     ],
     <span class="hl-red">"metadata"</span>: {
       { ... }
@@ -448,7 +451,7 @@ java -jar web/target/web-1.0-SNAPSHOT.jar
         <span class="hl-green">"foo.com/images"</span>,
         <span class="hl-green">"2018-12-15 00:34:03.8+00</span>"
       ],
-      <span class="hl-gray">// Many more events...</span>
+      <span class="hl-gray"><i>// Many more events...</i></span>
     ],
     <span class="hl-red">"metadata"</span>: {
       { ... }
@@ -489,11 +492,11 @@ java -jar web/target/web-1.0-SNAPSHOT.jar
           <h3 id="which-queue-to-choose">Which Queue to Choose</h3>
           <p>The next question that faced us was which messaging queue to use. The two choices that were immediately apparent to us were RabbitMQ and Apache Kafka. While Apache Kafka had an uncontested higher throughput (20,000mps vs 100,000mps), RabbitMQ would be far easier to learn and implement than Kafka, and since we were dealing with greenfield applications we may be okay with the smaller throughput.</p>
           <p>However, there were two drawbacks with using RabbitMQ. First, the AMQP protocol that RabbitMQ is built upon cannot guarantee the ordering of messages received by a consumer. This is because if a consumer goes down while the queue is trying to send it a message, it will try the message again later on, but other messages in the queue may be sent before retrying the failed message.</p>
-          <p>(picture)</p>
+          <div class="image no-bg no-shadow"><img src="images/diagrams/consumers.png" alt="Consumers reading from Kafka brokers" /></div>
           <p>This wasn&#39;t an immediate concern for us since in our analytics situation the order of events isn&#39;t of paramount concern. Though a discussion of how we stored event data takes place below, essentially Chronos stores all of the raw event data in one database while sending it to another to perform aggregated views for real-time feedback. Since the aggregations were commutative in nature, the ordering of the received messages didn&#39;t have to be exact.</p>
           <p>That said, what was a major concern for us was the fact that RabbitMQ doesn&#39;t support data retention: once a message has been read by the consumer and an acknowledgement has been received, it is removed from the queue. This means if we ever wanted to add a new consumer to read data from our topic we would have to create some kind of worker to move data from that topic that now resides elsewhere to the new piece of architecture.</p>
           <p>Since Chronos is a framework, we wanted it to be relatively easy for a developer to add a new data sink to send data to. By using Kafka, all the developer would have to do is set up a new consumer and then subscribe to the topic. Though it would be harder for us to implement, by choosing Kafka we could guarantee this ease of flexibility since Kafka holds on to any data sent to it (albeit for a specified limited time) and allows for it to be replayed.</p>
-          <p>(Image)</p>
+          <div class="image no-bg no-shadow"><img src="images/diagrams/durability.png" alt="Kafka's message durability allows for replaying messages" /></div>
           <h2 id="apache-kafka">Apache Kafka</h2>
           <p>Though we described Kafka as a messaging queue earlier, it could more aptly be described as an append-only log where messages written to a topic are append to those before it and retained for a set period of time. It's this data retention that allows for messages to be replayed by consumers that allows for Kafka to have exactly-once message guarantees. This means that data sent to Kafka is treated as immutable.</p>
           <p>As mentioned above, Kafka uses a Pub/Sub architecture where producers write data to topics and consumers read data from them. Topics themselves are split into one or more partitions that can be split across a number of Kafka Brokers (server). Message ordering is only guaranteed within a partition, and not across, so if messaging order is paramount all data must pass through a single partition.</p>
@@ -501,7 +504,7 @@ java -jar web/target/web-1.0-SNAPSHOT.jar
           <p>Partitions themselves (and <i>not</i> topics) live on Kafka Brokers, each of which have their own id. Multiple brokers that communicate with each other are referred to as a &quot;cluster,&quot; and the partitions themselves are assigned automatically to the brokers. The brokers are able to communicate with one another via Apache Zookeeper (which also manages the brokers in a cluster in general).</p>
           <p>As stated previously, producers write data to a topic. By default, they will write the data in a round-robin fashion to the partitions, but you may also specify a key which will be hashed in order to determine which partition to write to. Likewise, consumers read data from a particular topic, more specifically in order starting from an offset within a partition. Consumers automatically &quot;know&quot; which broker to read the data from and will commit their offsets after reading data, which allows a consumer that goes down to pick back up where it left off once it recovers. Both producers and consumers automatically recover and adapt to brokers going up and down, which increases the availability of the overall system.</p>
           <p>In the case of Chronos, we have a single <code>events</code> topic which is across 3 brokers. We chose 3 brokers to increase availability since we can support up to N - 1 brokers going down. This way, if one broker is taken offline for any kind of management, and another one unexpectedly crashes, we still have one broker remaining to push the data to. Since message ordering wasn&#39;t a concern, we split the topic into 6 partitions (2 per broker) in order to increase parallelism and thus throughput. There is a <code>chronos</code> consumer group that contains 6 consumers, one for each partition, that reads the data and then writes it to the databases.</p>
-          <p>(image)</p>
+          <div class="image no-bg no-shadow"><img src="images/diagrams/consumer_group.png" alt="Consumers reading from the 'events' topic in a consumer group" /></div>
           <p>While Kafka helped to decouple our system and make it a streaming system at its core, it did introduce some new problems. Firstly, Kafka can be difficult to set up and configure, and we wanted to abstract and standardize that process away from the developer so that the host OS for deployment wasn&#39;t a concern. Secondly, Kafka does require monitoring and management, and we didn&#39;t want the developer to be bogged down managing Kafka as opposed to working on the core of the application at hand.</p>
           <h2 id="docker">Docker</h2>
           <p>We decided to use Docker in order to configure and standardize our Kafka setup so as to make deployment as painless as possible for the developer. By utilizing the isolating capabilities of containers, we can deploy our Zookeeper and Kafka Cluster setup on various environments and so not limit the developer to whatever OS we built Chronos in.</p>
@@ -764,9 +767,9 @@ docker-compose stop
           <p>To better understand how it&#39;s done by PipelineDB we have to introduce its two fundamental abstractions: Streams and Continuous Views.</p>
           <p>Streams in PipelineDB look like regular tables and a row in a stream looks like a table row and represents one event. But unlike regular tables streams do not store the data. Instead they are serving as the data sources to read from by Continuous views.</p>
           <p>When each event arrives at the stream, it is given a small bitmap that represents a list of all continuous views that need to read the event.</p>
-          <div class="image no-bg"><img src="https://i.imgur.com/948w1Gz.png" alt=""></div>
+          <div class="image no-bg no-shadow"><img src="images/diagrams/pipeline_01.png" alt="In PipelineDB, new events are given a bitmap" /></div>
           <p>When a continuous view is done reading an event, it flips a single bit in the bitmap.</p>
-          <div class="image no-bg"><img src="https://i.imgur.com/5AqnN9h.png" alt=""></div>
+          <div class="image no-bg no-shadow"><img src="images/diagrams/pipeline_02.png" alt="Flipping a bit" /></div>
           <p>When all of the bits in the bitmap are set to 1, the event is discarded and can never be accessed again.</p>
           <p>Once the data is consumed by the views it is being discarded.</p>
           <p>Continuous views in PipelineDB are basically PostgreSQL materialized views. A continuous view has a predefined query that is being run continuously on a stream or a combination of streams and tables. As new data arrives to the stream it&#39;s read by the views and is incrementally updated. The view only stores the updated summary.</p>
@@ -807,17 +810,36 @@ SELECT</span>
             </pre>
           </div>
           <p>A view is described by the PostgreSQL <code>SELECT</code> query that specifies what type of aggregation will be performed on stream data. Every time the event arrives in a stream the query is run and the new result is stored in the view table.</p>
-          <div class="image no-bg"><img src="https://i.imgur.com/TpgTorN.png" alt=""></div>
+          <div class="image no-bg no-shadow"><img src="images/diagrams/pipeline_03.png" alt="Views reading from Streams" /></div>
           <p>Since continuous views are a lot like regular views, when we need to retrieve the results from them we can just run <code>SELECT</code> on specific view:</p>
           <div class="code-block">
             <pre>
               <code class="language-sql"><span class="hl-purple">SELECT</span> link_text <span class="hl-purple">AS FROM</span> link_text_count;</code>
             </pre>
           </div>
-          <div class="image no-bg"><img src="https://i.imgur.com/4PgyvHO.png" alt=""></div>
+          <table>
+            <thead>
+              <tr>
+                <th>link_text</th>
+                <th>count</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>"Like"</td>
+                <td class="table-number">3</td>
+              </tr>
+              <tr>
+                <td>"Sign Up"</td>
+                <td class="table-number">5</td>
+              </tr>
+              <tr>
+                <td>"Sign In"</td>
+                <td class="table-number">0</td>
+              </tr>
+            </tbody>
+          </table>
           <p>We can use any <code>SELECT</code> statement to further analyze data in the continuous view.</p>
-          <p>/...</p>
-
           <h2 id="grafana">Grafana</h2>
           <p>To give more power to a developer&#39;s data exploration, Chronos uses Grafana to visualize queries in each of our databases. Though the developer has to manually link Grafana to each of the databases via Grafana&#39;s GUI, the process of doing so is quite easy (and we explain how to do so in <a href="https://github.com/chronos-project/chronos-pipeline">our repository&#39;s</a> <code>README</code> file. Once done, a developer can use either Grafana&#39;s query builder (GUI) or SQL to query the databases in order to visualize the data.</p>
           <div id="grafana-ts" class="image"><img src="https://i.imgur.com/3cgXOX6.png" alt="grafana-TS"></div>
