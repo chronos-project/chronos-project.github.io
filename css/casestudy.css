@@ -257,6 +257,8 @@ pre {
   border-radius: 10px;
   color: #C5CCC6;
   display: inline-block;
+  max-width: 100%;
+  overflow-y: scroll;
 }
 
 blockquote {
@@ -281,6 +283,7 @@ code[class*="language"] {
   display: block;
   line-height: 20px;
   margin: 10px 30px -3px 30px;
+  box-sizing: border-box;
 }
 
 .json-key { color: #DF5763; }
