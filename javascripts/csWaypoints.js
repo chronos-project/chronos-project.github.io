@@ -101,13 +101,13 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   let apiWaypoint = new Waypoint({
-    element: document.getElementById('api-server'),
+    element: document.getElementById('server-infrastructure'),
     handler: (direction) => {
       removeActive(titles);
       let tocReference;
 
       if (direction === 'down') {
-        tocReference = document.getElementById('api-server-toc');
+        tocReference = document.getElementById('server-infrastructure-toc');
       } else {
         tocReference = document.getElementById('capturing-events-toc');
       }
@@ -125,7 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (direction === 'down') {
         tocReference = document.getElementById('apache-kafka-toc');
       } else {
-        tocReference = document.getElementById('api-server-toc');
+        tocReference = document.getElementById('server-infrastructure-toc');
       }
 
       addActive(tocReference);
