@@ -30,9 +30,14 @@
                 <li class="h3" data-element="streams-and-tables">Streams and Tables</li>
               </ul>
             </li>
+            <li class="h2" id="manual-implementation-toc" data-element="manual-implementation">Manual Implementation
+              <ul>
+                <li class="h3" data-element="database-selection">Database Selection</li>
+                <li class="h3" data-element="code-coupling">Code Coupling</li>
+              </ul>
+            </li>
             <li class="h2" id="existing-solutions-toc" data-element="existing-solutions">Existing Solutions
               <ul>
-                <li class="h3" data-element="yandex-metrica">Yandex Metrica</li>
                 <li class="h3" data-element="eventhub">EventHub</li>
                 <li class="h3" data-element="countly-community-edition">Countly Community Edition</li>
                 <li class="h3" data-element="chronos">Chronos</li>
@@ -45,9 +50,8 @@
                 <li class="h3" data-element="security-concerns">Security Concerns</li>
               </ul>
             </li>
-            <li class="h2" id="api-server-toc" data-element="api-server">API Server
+            <li class="h2" id="server-infrastructure-toc" data-element="server-infrastructure">Server Infrastructure
               <ul>
-                <li class="h3" data-element="code-coupling">Code Coupling</li>
                 <li class="h3" data-element="which-queue-to-choose">Which Queue to Choose</li>
               </ul>
             </li>
@@ -56,7 +60,6 @@
             <li class="h2" id="chronos-cli-toc" data-element="chronos-cli">Chronos CLI</li>
             <li class="h2" id="storing-event-data-toc" data-element="storing-event-data">Storing Event Data
               <ul>
-                <li class="h3" data-element="to-sql-or-to-nosql-">To SQL, or to NoSQL?</li>
                 <li class="h3" data-element="timescaledb">TimescaleDB</li>
                 <li class="h3" data-element="pipelinedb">PipelineDB</li>
               </ul>
@@ -79,8 +82,7 @@
         <div id='markdown'>
           <h1 id="case-study">Case Study</h1>
           <h2 id="introduction">Introduction</h2>
-          <p>Chronos is an event-capturing framework for greenfield applications, and is built using NodeJS, Apache Kafka, TimescaleDB, and PipelineDB. It allows developers to easily capture and store user events that happen on the client side, and then perform data exploration on the captured events in order to aid business logic. By using Apache Kafka, Chronos is a streaming system at its core and is thus easily expandable to the developer's needs. Further, Chronos is deployed using Docker and comes with a CLI that abstracts the difficulties in installing and running the system.</p>
-          <p>When building Chronos we faced several difficulties. The first were the various challenges in sending event data to the API server including limited browser resources, security concerns, and payload size limitations. Second was the issue of code coupling, or making sure that Chronos could easily be expanded to fit a developers needs. Third, we had to overcome the difficulties with abstracting away any difficulties for the developer when working with Apache Kafka, including installation, configuration, and potential errors. Lastly, we had to overcome the difficulties in storing event data while still making data exploration possible for a large range of developers.</p>
+          <p>Chronos is an event-capturing framework for greenfield applications, and is built using NodeJS, Apache Kafka, TimescaleDB, and PipelineDB. It allows developers to easily capture and store user events that happen on the client side, and then perform data exploration on the captured events. At its core, Chronos is an event streaming system that allows developers to extend its capabilities through the Kafka ecosystem. Further, Chronos is deployed using Docker and comes with a CLI that abstracts the difficulties in installing and running the system.</p>
           <p>This case study will begin by describing what event data is and how it contrasts from entity data. Next, we will define what a greenfield application is and review some of the existing solutions for this area and what some problems there are in using these systems. Lastly, we will describe how we went about building Chronos in order to solve these problems and how we overcame the challenges that presented themselves along the way.</p>
           <h2 id="what-is-event-data-">What is Event Data?</h2>
           <h3 id="event-data-vs-entity-data">Event Data vs Entity Data</h3>
@@ -141,7 +143,7 @@
           </div>
           <p class="caption">Example of a <code>pageview</code> event as a JSON object</p>
           <p>As such, <strong>event data</strong> is data that models each of these events. Unlike entity data which is core to the business logic of an application, event data is a kind of metadata, or data about data, which describes how an application is being used, and is usually not central to its business logic. In this case, if entity data is a noun which carries around state, then event data is a verb which describes an action.</p>
-          <p>Since event data describes how an application is being used, capturing and analyzing this data provides a major competitive advantage since it can be used to positively iterate on a product and increase profits.[1] However, if a developer wants to track event data, then unlike entity data, all the events would have to be stored since it is with the total set of events that one can analyze the data and draw conclusions. In other words, events are treated as immutable and are never updated and rarely deleted. The following table maps out the differences in this model between event and entity data thus far:[2]</p>
+          <p>Since event data describes how an application is being used, capturing and analyzing this data provides a major competitive advantage since it can be used to positively iterate on a product and increase insights.[1] However, if a developer wants to track event data, then unlike entity data, all the events would have to be stored since it is with the total set of events that one can analyze the data and draw conclusions. In other words, events are treated as immutable and are never updated and rarely deleted. The following table maps out the differences in this model between event and entity data thus far:[2]</p>
           <table>
             <thead>
               <tr>
@@ -152,7 +154,7 @@
             <tbody>
               <tr>
                 <td>Strict schema</td>
-                <td>Felxible schema</td>
+                <td>Flexible schema</td>
               </tr>
               <tr>
                 <td>Normalized</td>
@@ -180,9 +182,9 @@
               </tr>
             </tbody>
           </table>
-          <p>While this is a good first attempt to model events, the key problem with ending here is that while there is definitely a legitimate distinction between event data and entity data, the two cannot be completely partitioned into unrelated categories. To understand why this is, we need to discuss the &quot;theory of streams and tables&quot; as concevied of by figures such as Martin Kleppmann, Jay Kreps, and Tyler Akidau.</p>
+          <p>While this is a good first attempt to model events, the key problem with ending here is that while there is definitely a legitimate distinction between event data and entity data, the two cannot be completely partitioned into unrelated categories. To understand why this is, we need to discuss the &quot;theory of streams and tables&quot; as concevied by Martin Kleppmann, Jay Kreps, and Tyler Akidau.</p>
           <h3 id="streams-and-tables">Streams and Tables</h3>
-          <p>To start with, we&#39;ll need some working definitions of what streams and tables are. To borrow from Akidau, a <strong>stream</strong> is &quot;[a]n element-by-element view of the evolution of a dataset over time.&quot;[3] Streams have traditionally been processed by streaming systems that are designed to handle unbounded (infinite) datasets. A <strong>table</strong> is &quot;[a] holistic view of a dataset at a specific point in time&quot;[2] and is traditionally handled within relational databases (i.e. SQL). We can expand these definitions by saying that streams are data that are in motion, while tables are data that are at rest.</p>
+          <p>To start with, we&#39;ll need some working definitions of what streams and tables are. To borrow from Akidau, a <strong>stream</strong> is &quot;[a]n element-by-element view of the evolution of a dataset over time.&quot;[3] Streams have traditionally been processed by streaming systems that are designed to handle unbounded (infinite) datasets. A <strong>table</strong> is &quot;[a] holistic view of a dataset at a specific point in time&quot;[3] and is traditionally handled within relational databases (i.e. SQL). We can expand these definitions by saying that streams are data that are in motion, while tables are data that are at rest.</p>
           <p>Staying with tables for a moment, it&#39;s worth remembering that the underlying data structure for many databases is a log, more specifically one that is append-only. As each transaction takes place for a particular entity, they are recorded to the log. The log, then, can be seen as a kind of stream of data which can be used to re-create the state of a table within our database. More broadly speaking, the aggregation of a stream will give us a table.</p>
           <div class="image no-bg"><img src="https://i.imgur.com/lBVpTOv.png" alt="log_to_table.png"></div>
           <p>The inverse of this relationship is that streams are created from tables as a kind of change-log for the table. In other words, if we look at the changes that occur on a particular entity over time, we end up with a stream of data.</p>
@@ -196,8 +198,43 @@
             <li>Event data can validate business logic or be used to form new strategies</li>
             <li>Event data are the fundamental building blocks of the state of an application</li>
           </ol>
-          <p>The main difficulty in capturing and using event data is that since for so long they&#39;ve been seen to exist implicitly in an application they don&#39;t have a proper place within the architecture of many set ups. Further, since events are constantly happening in real time, any system for capturing and storing event data needs to be able to map to this stream of events and store data in an apropos way.</p>
-          <p>Thankfully, streaming architectures for web applications have been developing at a quick pace over the last decade and a half since the release of MapReduce in 2003. However, they are a specialized field and have a significant learning curve to use, let alone to then go and implement them for production. It would be unrealistic for ever developer to learn how to implement such a system for capturing event data, especially for greenfield applications when the developer isn&#39;t even sure how the application will be used yet.</p>
+          <p>The main difficulty in capturing and using event data is that since for so long they&#39;ve been seen to exist implicitly in an application they don&#39;t have a proper place within an application's data architecture. Further, since events are constantly happening in real time, any system for capturing and storing event data needs to be able to map to this stream of events and store data in an apropos way.</p>
+          <h2 id="manual-implementation">Manual Implementation</h2>
+          <p>First, we should explore how you would go about implementing an event capturing system manually. The first question you might ask yourself is “what kind of database should I use to store my event data?” When implementing your storage system, there are three considerations for greenfield applications:</p>
+          <ul>
+            <li>How can you store event data in a way that is efficient for a write heavy application?</li>
+            <li>How can you make data exploration easy for a developer?</li>
+            <li>How can you make it space effective?</li>
+          </ul>
+          <h3 id="database-selection">Database Selection</h3>
+          <p>The first concern, “how can you store data in a way that is efficient for write heavy application,” inevitably leads to the SQL vs NoSQL question. Most streaming systems used for analytics utilize NoSQL. Reasons include:</p>
+          <ul>
+            <li>NoSQL performs better in write heavy applications</li>
+            <li>The schema of the event data doesn&#39;t have to be known in advance, which makes it more flexible</li>
+            <li>NoSQL is better at horizontal scaling (sharding) than SQL</li>
+            <li>It is harder to scale SQL given the large number of events captured compared to NoSQL</li>
+          </ul>
+          <p>Since you are capturing events for the sake of data exploration, your first instinct may be to use a relational database. SQL is a powerful declarative language that, even according to analytics companies such as <a href="https://keen.io/" target="_blank">Keen IO</a> (who use Cassandra), is still the bar none when it comes to exploring data. However, you’ll quickly notice a couple of drawbacks when using a relational database.</p>
+          <p>The chief difficulty with using SQL for event data is that since you are storing data for each action taken by a user, the eventual dataset in the database will be massive, so much so that it cannot reside just in memory and thus must persist on the disk as well. This also means that the indexes must reside on the disk as well, and thus any time you will need to update the data structure of our indexes, there will be quite a bit of disk I/O, which degrades performance. This shouldn’t come as a surprise; since you (usually) do not want to delete raw event data, that means that the primary writes to a database are inserts instead of updates (the latter being more common in an OLTP database).</p>
+          <p>Another difficulty when using SQL for storing event data is that SQL requires each record that is inserted into a table to conformed to a pre-defined schema. While it is possible to change the schema, this would require you to take the database offline in order to make any changes. If you wanted to manually define the events you would like to capture for our greenfield application, then you will also need to take time defining the structure of the tables on the database layer of your pipeline.</p>
+          <p>What you need, then, is a database that is able to perform well with a write-heavy application where we are constantly appending schema-less data. One option is to use a database whose underlying structure is a Log-structured Merge (LSM) tree, such as a document store (MongoDB) or a columnar database (Cassandra). LSMs are more efficient for large number of writes since they “reduce the cost of making small writes by only performing larger append-only writes to disk” as opposed to in-place writes.[4] In addition to this, these databases shouldn’t require you to define a schema before hand, which means you can change the structure of your event data on the fly without having to rework the back end. This allows for dynamic updating to your data models without coupling us to whatever back end we use.</p>
+          <p>While many analytics companies use columnar databases to store event data given their ability to analyze large data sets, a document store would suffice for a greenfield application. This is because your event capturing system is single tenant — it is just for <em>your</em> application, and so you don’t expect to need to examine nearly as a large of a dataset as an enterprise event-streaming system.</p>
+          <p>However, there are certain tradeoffs for choosing a LSM document store, namely that there are higher memory requirements and poor support for secondary indexes, both of which are a consequence of the underlying data-structure. That having been said, since you don’t exactly know what you&#39;ll be doing with our event data yet, losing secondary index support is an acceptable tradeoff. Further, a document store will require more memory than a relational database.</p>
+          <p>Though we are losing the power of the SQL language for data exploration, SQL’s chief difficulty with storing event data really does not make it a viable option since it will degrade far quicker in performance. Thus, for our hypothetical event capturing pipeline, a document store such as MongoDB would be a fine choice.</p>
+          <p>As you explore your data, you’re eventually going to discover recurring trends in how users interact with your application. If you wanted to track these patterns in “real-time” then you’ll need a way to aggregate the incoming event data into materialized views for analysis. A naive solution would be to set up various chron-jobs that run queries over the database to aggregate data. There are two problems with this approach. First, you will have to run your query against the entire dataset in order to filter it by whatever window of time you wish to use (e.g. last 5 minutes, 1 hour, 3 days, etc). These kinds of queries will become more expensive as our dataset grows. Second, this isn’t actually “real-time” since we are not continuously running a query, but rather just running a new query every so often. For example, if you wanted to know how many unique visitors came to your site within the last hour, at time <code>a</code> your “real-time” view would display one set of information. Until that view was materialized again an hour later at time <code>b</code>, the data would remain the same even though other users have now visited your site. In other words, you would be limiting yourself to set windows instead of sliding windows.</p>
+          <p>Instead, you could use a stream processor such as Apache Spark that will take the data while it’s still in a stream and aggregate it in whichever way you need. This would also allow you to use sliding windows to materialize actual real-time feedback instead of snapshots on the hour. Lastly, you could also store whichever views you wanted into your database in a new collection.</p>
+          <h3 id="code-coupling">Code Coupling</h3>
+          <p>Now that you have your database selected, you can continue with the rest of the event-processing pipeline. For the web server and API server, you don’t have to be as too picky. You could use HAProxy for the web layer, and NodeJS as your API server that receives the events sent by the client.</p>
+          <p>Currently the architecture may look something as follows:</p>
+          <div class="image"><img src="images/diagrams/case_study_arch_2.png" alt="Our pipeline with streaming aggregation" /></div>
+          <p>Already it has taken you quite some time to research and set up this architecture. However, you also may start noticing a problem: each piece of your architecture is tightly bound to at least one other piece. This is problematic because if one part goes down it could have a ripple effect throughout the whole system.</p>
+          <p>This problem will only increase as you continue to develop our event-processing pipeline. As your data exploration continues, you’ll likely find queries that you wanted reported to you on a daily basis, perhaps showing data such as the total number of unique visitors to your application that day, what the peak hours of usage were, the most visited pages, etc. We could run these queries via a chron-job set early in the morning (when user activity is low), and then have a worker send the data off to be e-mailed to us.</p>
+          <p>Further, since you want your application to be space effective, you likely don’t need to keep any data in MongoDB after some time duration. While you could take data that is older and aggregate it in some way to save on space, you'd also lose all the raw data in doing so. Instead, you could extract the data and compress it down as much as possible and store it on disk to be later sent to a some other service once you've outgrown your own event capturing system. This would require some kind of worker to extract the data from MongoDB and then perform the compression and storage:</p>
+          <div class="image"><img src="images/diagrams/case_study_arch_3.png" alt="A very coupled system" /></div>
+          <p>The pieces have become so entwined with one another that to have them communicate might involve a series of workers and other steps that, if any other part of the system fails, could also affect this communication. This problem will just continue to grow as our application does as well.</p>
+          <p>The way to decouple the pieces of architecture from one another is to use a messaging queue as a central piece which facilitates the communication of the various parts of the system. The messaging queue uses a &quot;Pub/Sub architecture&quot; where producers of data send messages to a topic and consumers of data would read those messages from the same topic. This also modularizes our system so that it is easy to add new producers and consumers as we need them.</p>
+          <div class="image"><img src="images/diagrams/case_study_arch_4.png" alt="A modularized system" /></div>
+          <p>While your streaming system is now complete, you’ve spent a lot of time researching various components, implementing them to work together, and testing them to make sure they work — and this is only on the backend! You haven’t gone and created your event tracking system for the client side yet. It should be clear by now why manually setting this system up for a greenfield application where you aren’t even completely sure how you’ll be using your event data yet is inefficient.</p>
           <h2 id="existing-solutions">Existing Solutions</h2>
           <p>Luckily, there are already existing solutions for a developer who wishes to capture, store, and analyze event data. However, many of these solutions are proprietary in nature and while they could be used for greenfield applications, they are better suited for larger or enterprise level applications. With these solutions we generally found the following problems:</p>
           <ol>
@@ -207,7 +244,7 @@
             <li>You may not have access to your raw data</li>
             <li>Manual implementation of events to capture</li>
           </ol>
-          <p>The justifications of these drawbacks should be straightforward:</p>
+          <p>The problems of these drawbacks should be straightforward:</p>
           <ol>
             <li>Since greenfield applications are usually in a prototype or new phase, they likely don&#39;t have or want to spend a lot of money on proprietary solutions</li>
             <li>With the growing concern about how people&#39;s data is being used, it&#39;s always a gamble to have your data hosted on a service&#39;s server that you don&#39;t have direct access to</li>
@@ -215,35 +252,116 @@
             <li>If you can only access data through an API and can never get at the raw data itself, not only does that limit what you can do with the data, but it makes it hard if not impossible to transfer it to another solution</li>
             <li>Since a greenfield application doesn&#39;t yet know what events to capture, requiring manual implementation of event capturing is counter-intuitive</li>
           </ol>
-          <p>Of the various solutions, there were three that we found in particular better suited our use case: Yandex Metrica, Event Hub, and Countly Community Edition.</p>
-          <h3 id="yandex-metrica">Yandex Metrica</h3>
-          <p>One existing solution is provided by <a href="https://metrica.yandex.com/about?">Yandex Metrica</a>, which is a product of the larger <a href="https://yandex.com/">Yandex</a> company. Two of the standout advantages of Yandex Metrica is that they provide the ability to create &quot;click maps&quot;, visual representations on a web page where a user clicked through, as well as heat maps that show which sections of your pages have the most activity. Yandex also has no fee associated with it.</p>
-          <p>While Yandex does require your data to live on their servers, they are required to respect European data privacy laws and also encrypt your data so it can&#39;t be used by other analytical services. Further, any data they look at for their own analytical purposes is done so in a way that your data remains anonymous.</p>
-          <p>One big drawback is that Yandex requires most event capturing to be manually implemented. Another problem is that while you do have access to your raw data, you can only access via their API, and so you have to extract and store your data manually.</p>
+          <p>Of the various solutions, there were two in particular better suited our use case: Event Hub and Countly Community Edition.</p>
           <h3 id="eventhub">EventHub</h3>
-          <p>Another solution for Greenfield applications is <a href="https://github.com/Codecademy/EventHub">EventHub</a>, which is an open source event tracking/storage system written in Java. It has some impressive analytical capabilities such as cohort and funneling queries, but it has little-to-no automatic tracking of events.</p>
-          <p>Two other drawbacks of EventHub are that it&#39;s timestamp is processing time only (i.e. it logs the timestamp when the data hits the server as opposed to when it occurs in the client). This is mitigated by the fact that any event capturing a developer implements can just include a client-side timestamp. However, the largest issue is that the project has been abandoned for 5 years now, so support would likely be totally absent.</p>
+          <p>One solution for greenfield applications is <a href="https://github.com/Codecademy/EventHub" target="_blank">EventHub</a>, which is an open source event tracking/storage system written in Java. It has some impressive analytical capabilities such as cohort queries, funneling queries, and A/B testing.</p>
+          <p>To deploy EventHub, our host machine needs to be able to run Java SDK and Maven. The compilation and running is a few short commands as provided on EventHub&#39;s README:</p>
+          <div class="code-block">
+            <pre>
+              <code class="language-shell">
+<span class="hl-gray"><i># set up proper JAVA_HOME for mac</i></span>
+<span class="hl-purple">export</span> JAVA_HOME=<span class="hl-green">$(/usr/libexec/java_home)</span>
+
+git clone https://github.com/Codecademy/EventHub.git
+cd EventHub
+<span class="hl-purple">export</span> EVENT_HUB_DIR=<span class="hl-green">`pwd`</span>
+mvn -am -pl web clean package
+java -jar web/target/web-1.0-SNAPSHOT.jar
+              </code>
+            </pre>
+          </div>
+          <p>One big drawback of EventHub is that the timestamp is uses for its funnel and chorot queries is based upon processing time, or when the data hits the server, as opposed to event time, or when the event actually occured. EventHub admits as much and even spells out the key problem with this approach:</p>
+          <blockquote>
+            <p>The direct implication for those assumptions are, first, if the client chose to cache some events locally and sent them later, the timing for those events will be recorded as the server receives them, not when the user made those actions; second, though the server maintains the total ordering of all events, it cannot answer questions like what is the conversion rate for the given funnel between 2pm and 3pm on a given date.</p>
+          </blockquote>
+          <p>EventHub doesn&#39;t track any events out of the box and so all event tracking must be implemented manually. Thankfully, the tracking API is fairly simple to use:</p>
+          <div class="code-block">
+            <pre>
+              <code class="language-js">
+<span class="hl-red">eventHub</span>.<span class="hl-blue">track</span>(<span class="hl-green">&quot;signup&quot;</span>, {
+  property_1: <span class="hl-green">&#39;value1&#39;</span>,
+  property_2: <span class="hl-green">&#39;value2&#39;</span>
+});
+              </code>
+            </pre>
+          </div>
+          <p>There are two other drawbacks of EventStore worth mentioning: firstly, it uses <a href="https://github.com/fusesource/hawtjournal/" target="_blank">HawtJournal</a> as journal storage, which uses a Java API for accessing data. While not to demean HawtJournal, it is likely not nearly as well known as SQL or NoSQL databases and thus may make data exploration for a greenfield application quite a nuisence. Secondly, EventHub has been abandoned for 5 years now, so support would likely be totally absent.</p>
           <h3 id="countly-community-edition">Countly Community Edition</h3>
-          <p>Of the three choices, <a href="https://github.com/Countly/countly-server">Countly&#39;s community edition</a> (open source) was the strongest option. Countly allows not only for a quick manual setup on your own server, but also provides a one-click setup option for hosting your server on Digital Ocean. Their tracker is a JavaScrpit SDK that tracks the following events automatically:</p>
+          <p>Another option is <a href="https://github.com/Countly/countly-server" target="_blank">Countly&#39;s community edition</a> (open source). Countly allows not only for a quick manual setup on your own server, but also provides a one-click setup option for deploying on Digital Ocean. Further, you can deploy Countly via Docker if that better suits your needs. Once deployed, it is recommended to assign a DNS A record to your Countly server (though this is optional), and you must still configure email delivery so that emails from the server are not caught by spam filters.</p>
+          <p>Countly’s tracker is a JavaScrpit SDK that tracks the following events automatically:</p>
           <ul>
             <li>sessions</li>
             <li>pageviews (both for tradition websites and single page applications)</li>
             <li>link clicks (both on a link or those on a parent node)</li>
             <li>form submissions</li>
           </ul>
-          <p>Two other events, mouse clicks and mouse scrolls, are only automatically captured in the enterprise edition. Since Countly must be ran on a server you own, you have access to all of your own data (which is stored in MongoDB), and they also provide a UI for visualizing and exploring your data.</p>
-          <p>The largest drawbacks to Countly are the limited number of events captured (anything else must be implemented manually) and that their pipeline setup is a direct connection from their API to their database (this is also true of EventHub). Why this latter design is problematic will be discussed below.</p>
+          <p>Two other events, mouse clicks and mouse scrolls, are only automatically captured in the enterprise edition, which costs money and is not open source. To use the tracker, you must install the tracker library (which can be done in a variety of ways including CDNs) and generate an <code>APP_KEY</code> by creating a website for tracking on the Countly Dashboard UI. Once this is done, you can set up the tracker configuration within a script tag, as well as manually implement any other event you’d like to capture other than the defaults:</p>
+          <div class="code-block">
+            <pre>
+              <code class="language-javascript">
+&lt;<span class="hl-red">script</span> <span class="hl-orange">type</span>=<span class="hl-green">&#39;text/javascript&#39;</span>&gt;
+
+<span class="hl-purple">var</span> Countly <span class="hl-teal">=</span> Countly <span class="hl-teal">||</span> {};
+<span class="hl-red">Countly</span>.<span class="hl-red">q</span> <span class="hl-teal">=</span> <span class="hl-red">Countly</span>.<span class="hl-red">q</span> <span class="hl-teal">||</span> [];
+
+<span class="hl-red">Countly</span>.<span class="hl-red">app_key</span> <span class="hl-teal">=</span> <span class="hl-green">&quot;YOUR_APP_KEY&quot;</span>;
+<span class="hl-red">Countly</span>.<span class="hl-red">url</span> <span class="hl-teal">=</span> <span class="hl-green">&quot;https://yourdomain.com&quot;</span>;
+
+<span class="hl-red">Countly</span>.<span class="hl-red">q</span>.<span class="hl-teal">push</span>([<span class="hl-green">&#39;track_sessions&#39;</span>]);
+<span class="hl-red">Countly</span>.<span class="hl-red">q</span>.<span class="hl-teal">push</span>([<span class="hl-green">&#39;track_pageview&#39;</span>]);
+
+<span class="hl-gray"><i>// Uncomment the following line to track web heatmaps (Enterprise Edition)
+// Countly.q.push([&#39;track_clicks&#39;]);
+
+// Uncomment the following line to track web scrollmaps (Enterprise Edition)
+// Countly.q.push([&#39;track_scrolls&#39;]);
+
+// Load Countly script asynchronously</i></span>
+(<span class="hl-purple">function</span>() {
+    <span class="hl-purple">var</span> cly <span class="hl-teal">=</span> <span class="hl-red">document</span>.<span class="hl-teal">createElement</span>(&#39;script&#39;); <span class="hl-red">cly</span>.<span class="hl-red">type</span> = &#39;text/javascript&#39;;
+    <span class="hl-red">cly</span>.<span class="hl-red">async</span> <span class="hl-teal">=</span> <span class="hl-orange">true</span>;
+    <span class="hl-gray"><i>// Enter url of script here (see below for other option)</i></span>
+    <span class="hl-red">cly</span>.<span class="hl-red">src</span> <span class="hl-teal">=</span> <span class="hl-green">&#39;https://cdn.jsdelivr.net/npm/countly-sdk-web@latest/lib/countly.min.js&#39;</span>;
+    <span class="hl-red">cly</span>.<span class="hl-blue">onload</span> <span class="hl-teal">=</span> <span class="hl-purple">function</span>(){<span class="hl-red">Countly</span>.<span class="hl-blue">init</span>()};
+    <span class="hl-purple">var</span> s <span class="hl-teal">=</span> <span class="hl-red">document</span>.<span class="hl-teal">getElementsByTagName</span>(<span class="hl-green">&#39;script&#39;</span>)[<span class="hl-orange">0</span>]; <span class="hl-red">s</span>.<span class="hl-red">parentNode</span>.<span class="hl-teal">insertBefore</span>(cly, s);
+})();
+&lt;/<span class="hl-red">script</span>&gt;
+              </code>
+            </pre>
+          </div>
+          <div class="code-block">
+            <pre>
+              <code class="language-javascript">
+&lt;<span class="hl-red">script</span> <span class="hl-orange">type</span>=<span class="hl-green">&#39;text/javascript&#39;</span>&gt;
+<span class="hl-gray"><i>//send event on button click</i></span>
+<span class="hl-purple">function</span> <span class="hl-blue">clickEvent</span>(ob){
+    <span class="hl-red">Countly</span>.<span class="hl-red">q</span>.<span class="hl-teal">push</span>([<span class="hl-green">&#39;add_event&#39;</span>,{
+        key:<span class="hl-green">&quot;asyncButtonClick&quot;</span>,
+        segmentation: {
+            <span class="hl-green">&quot;id&quot;</span>: <span class="hl-red">ob</span>.<span class="hl-red">id</span>
+        }
+    }]);
+}
+&lt;/<span class="hl-red">script</span>&gt;
+&lt;<span class="hl-red">input</span> <span class="hl-orange">type</span>=<span class="hl-green">&quot;button&quot;</span> <span class="hl-blue">id</span>=<span class="hl-green">&quot;asyncTestButton&quot;</span> <span class="hl-orange">onclick</span>=<span class="hl-green">&quot;clickEvent(this)&quot;</span> <span class="hl-orange">value</span>=<span class="hl-green">&quot;Test Button&quot;</span>&gt;
+              </code>
+            </pre>
+          </div>
+          <p class="caption"><em>Truncated examples from the <a href="https://resources.count.ly/docs/countly-sdk-for-web" target="_blank">Countly JavaScript SDK documentation</a></em></p>
+          <p>Since Countly must be deployed on your own server, you have access to all of your data (which is stored in MongoDB). To make querying the database easier, the Countly UI can also use a plugin to explore the database. However, the community edition only stores data in an aggregated format so as to increase the speed of queries and decrease storage space. This means in order to get access to raw data, you must use the enterprise edition. Further, many of the UI features also require an enterprise edition to be used (e.g. automated push notifications, retention, user flows, custom dashboards, etc). Lastly, since Countly doesn’t utilize a modularized architecture, if you ever wanted to expand your Countly server to use other software, you would have to deal with any implementation issues via code coupling, requiring you to have a good grasp on the overall structure of the codebase.</p>
           <h3 id="chronos">Chronos</h3>
-          <p>For Chronos to be an alternative in this space, it must solve the problems listed above as well as provide some benefits compared to the existing solutions. In the end, Chronos was able solve the 5 problems above:</p>
+          <p>Chronos offers a different set of tradeoffs that automates many of the pains of a manual implementation, but allows for control and ownership of an open course solution. Chronos:</p>
           <ol>
-            <li>Chronos is open source, and thus free to use</li>
-            <li>Data only exists on the server you host Chronos on and so you don&#39;t have to fear its security</li>
-            <li>Chronos will never sample your data since it&#39;s just an infrastructure</li>
-            <li>Chronos provides access to your raw data</li>
-            <li>Chronos provides a config file that specifies which events you&#39;d like to capture: everything else is automated</li>
+            <li>Is open source, and thus free to use</li>
+            <li>Keeps data only on the server you host Chronos on</li>
+            <li>Will never sample your data</li>
+            <li>Provides access to your raw data as well as aggregated views in real-time</li>
+            <li>Provides a config file that specifies which events you&#39;d like to capture: everything else is automated</li>
           </ol>
-          <p>In addition to this, we provided a way for Chronos to visualize any queries over the data. We also wanted to make sure that Chronos would be space efficient since a greenfield application shouldn&#39;t be spending lots of money on their own server to collect data. Below we detail how we went about building Chronos and the challenges we faced.</p>
-          <h2 id="capturing-events">Capturing Events</h2>
+          <p>In addition to this, Chronos can visualize any queries over the data. We also wanted to make sure that Chronos would be space efficient since a greenfield application shouldn&#39;t be spending lots of money on their own server to collect data.</p>
+          <div class="image no-bg no-shadow"><img src="images/diagrams/system.png" alt="A picture of the system architecture of Chronos" /></div>
+          <p class="caption">The system architecture of Chronos. Events are captured in a tracker and are sent to a NodeJS API server. From there they go through an Apache Kafka cluster, and a consumer writes them simultaneously to PipelineDB and TimescaleDB.</p>
+          <h2 id="capturing-events">Chronos: Capturing Events</h2>
           <p>Chronos captures events on the client side by using a <code>tracker.js</code> file. The tracker itself is compiled from multiple files by using Browserify and automates the capturing of the following events:</p>
           <ul>
             <li>pageviews</li>
@@ -291,13 +409,12 @@
             </pre>
           </div>
           <p>By using <code>setInterval()</code> we were able to standardize the amount of data we were capturing in the <code>mousemovement</code> event across browsers since each has their own implementation of the rate of capture.</p>
-          <p>However, when we began to try and send the events directly to the API, we began raising <code>net::ERR_INSUFFICIENT_RESOURCES</code> exceptions in certain browsers. We first attempted to reduce the granularity of the event to 20ms and then to 1000ms but kept running into the same error. Furthermore, on browsers that did not have this problem, the API began to choke on the sheer number of requests very quickly.</p>
+          <p>However, when we began to try and send the events directly to the API, the system began raising <code>net::ERR_INSUFFICIENT_RESOURCES</code> exceptions in certain browsers. We first attempted to reduce the granularity of the event to 20ms and then to 1000ms but kept running into the same error. Furthermore, on browsers that did not have this problem, the API began to choke on the sheer number of requests very quickly.</p>
           <div class="image no-bg"><img src="https://i.imgur.com/kUYAfRj.png" alt="Sending events in a direct stream results in a failure"/></div>
           <p>A solution to this is to send the events in batch by storing them in a buffer and then sending the buffer when either a) it is full, or b) when the user begins to leave the page. Once we did this both the browser and the API stopped experiencing issues.</p>
           <div class="image no-bg"><img src="https://i.imgur.com/6HX9MW5.png?1" alt="Sending many events in a buffer works"/></div>
           <h3 id="payload-size">Payload Size</h3>
-          <p>(server specs, etc)</p>
-          <p>In our the first design of our buffer, we sent each event over to the server as a JSON object. We tested the size of the events by sending a buffer with only link click events with the same values along with a consistent write key and metadata object. In this scenario, each event was roughly 92 bytes in size, and so a buffer containing 1,150 events would return a <code>413</code> error from the server.</p>
+          <p>In our the first design of our buffer, we sent each event over to the server as a JSON object. We tested the size of the events by sending a buffer with only link click events with the same values along with a consistent write key and metadata object to a Ubuntu server that had 4GB of RAM and 80GB of space. In this scenario, each event was roughly 92 bytes in size, and so a buffer containing 1,150 events would return a <code>413</code> error from the server.</p>
           <div class="code-block">
             <pre>
               <code class="language-JSON">
@@ -311,7 +428,7 @@
         <span class="hl-red">"target_url"</span>: <span class="hl-green">"foo.com/images"</span>,
         <span class="hl-red">"client_time"</span>: <span class="hl-green">"2018-12-15 00:34:03.8+00</span>"
       },
-      <span class="hl-gray">// Many more events...</span>
+      <span class="hl-gray"><i>// Many more events...</i></span>
     ],
     <span class="hl-red">"metadata"</span>: {
       { ... }
@@ -335,7 +452,7 @@
         <span class="hl-green">"foo.com/images"</span>,
         <span class="hl-green">"2018-12-15 00:34:03.8+00</span>"
       ],
-      <span class="hl-gray">// Many more events...</span>
+      <span class="hl-gray"><i>// Many more events...</i></span>
     ],
     <span class="hl-red">"metadata"</span>: {
       { ... }
@@ -344,30 +461,18 @@
               </code>
             </pre>
           </div>
-          <p>While our next thought was to serialize the data into binary, a key problem is that we could never guarantee the size of our buffer, nor the values of the metadata object, nor the write key. As such, optimizing on binary would be unfeasible. We could instead just serialize the entire UTF-16 string into binary, but the minimum byte size for each character would be 8 bits which ended up being no more effective than just sending the string as is.</p>
+          <p>While our next thought was to serialize the data into binary, a key problem is that we could never guarantee the size of our buffer, nor the values of the metadata object, nor the write key. Therefore, we could not take advantage of any optimized binary serialization techniques. We could instead just serialize the entire UTF-16 string into binary, but the minimum byte size for each character would be 8 bits which ended up being no more effective than just sending the string as is.</p>
           <h3 id="beacon-api-and-error-handling">Beacon API and Error Handling</h3>
-          <p>By default, the tracker sends the data to the API server by using the Beacon API. This API was designed with analytics and diagnostics in mind as it allows for data to be sent in an asynchronous <code>POST</code> request that is non-blocking and thus doesn&#39;t interfere with the user&#39;s experience of the application. However, the Beacon API doesn&#39;t support error handling since it doesn&#39;t usually require to receive a response from the server. To handle errors, Chronos also allows for the Fetch API to be used.</p>
+          <p>By default, the tracker sends the data to the API server by using the Beacon API, which is a standard way for browsers to schedule periodic requests to a server. This API was designed with analytics and diagnostics in mind as it allows for data to be sent in an asynchronous <code>POST</code> request that is non-blocking and thus doesn&#39;t interfere with the user&#39;s experience of the application. However, the Beacon API doesn&#39;t support error handling since it doesn&#39;t usually require to receive a response back from the server. To handle errors, Chronos also allows for the Fetch API to be used.</p>
           <h3 id="security-concerns">Security Concerns</h3>
-          <p>Since the tracker file lives on the client side, it presents inherent difficulties with security since the code can always be examined. As such, a malicious user can exploit the tracker to send corrupt data. However, we found from our research that this is an inherent difficulty within the field of web analytics:</p>
+          <p>Since the tracker file lives on the client side, it presents inherent difficulties with security since the code can always be examined. As such, a malicious user can exploit the tracker to send corrupt data. However, client side security is an inherently difficult concept given the nature of how browsers work:</p>
           <blockquote>
-            <p>There’s no way to both allow clients to send data to Keen and prevent a malicious user of a client from sending bad data. This is an unfortunate reality. Google Analytics, Flurry, KissMetrics, etc., all have this problem. <em><a href="https://keen.io/docs/security/">Keen IO</a></em></p>
+            <p>There’s no way to both allow clients to send data to Keen and prevent a malicious user of a client from sending bad data. This is an unfortunate reality. Google Analytics, Flurry, KissMetrics, etc., all have this problem. <em><a href="https://keen.io/docs/security/#client-security" target="_blank">Keen IO</a></em></p>
           </blockquote>
           <p>As such, we provided two layers of security. The first is that we provide a write key which exists both on the server side and is imbedded withint the tracker when it is compiled. When data is sent to the server we use middleware to check if the write key in the client matches that of the server. If it doesn&#39;t, the request is rejected. This way, if a developer notices that bad data is coming through to the server, the api key can be re-generated and thus prevent the malicious writes from coming through.</p>
           <p>The second layer of security is that another piece of middleware contains a listing of permitted host addresses that can write data to the server. If the incoming request comes from a host that isn&#39;t white listed, the server rejects the request. </p>
-          <h2 id="api-server">API Server</h2>
-          <p>Once the data reached the server, our first design was to iterate over the buffer of events and append the <code>metadata</code> object to each of them and then to write them directly to the database. What&#39;s nice about this design is that it&#39;s very straightforward and easy to understand, but we could already forsee potential problems.</p>
-          <h3 id="code-coupling">Code Coupling</h3>
-          <p>Our API was now performing a few different actions: not only was it receiving data from the client side, but it was now massaging the data to the appropriate format and then writing it to the database. What this meant was that we were having to write code that tightly coupled the different pieces of our architecture together.</p>
-          <p>While this may not seem to bad at the moment, imagine a hypothetical system where data went through a web server to our application layer which was tightly coupled to our database (as was the case with Chronos at this time). Visually, it would look something like this:</p>
-          <div class="image"><img src="https://i.imgur.com/3OYAtGU.png" alt="diagram 1"></div>
-          <p>If our application didn&#39;t intend to do anything beyond this, then perhaps this is an okay design choice. However, perhaps we add a Redis for caching popular queries and Hadoop HDFS for long term data storage.</p>
-          <div class="image"><img src="https://i.imgur.com/LGd9jkg.png" alt="diagram 2"></div>
-          <p>Now our API server is having to write to various pieces of architecture, each of which will further couple our system. Further, we may need some workers for the various pieces to communicate to one another, which further entagles the entire system together. Even here it&#39;s not <em>too</em> bad, but just add a bit more...</p>
-          <div class="image"><img src="https://i.imgur.com/rzAdQg2.png" alt="diagram 3"></div>
-          <p>It&#39;s a mess! The pieces have become so entwined with one another that to have them communicate might involve a series of workers and other steps that, if any other part of the system fails, could also affect this communication. This problem will just continue to grow as our application does as well.</p>
-          <p>The way to decouple the pieces of architecture from one another is to use a messaging queue as a central piece which facilitates the communication of the various parts of the system. The messaging queue uses a &quot;Pub/Sub architecture&quot; where producers of data send messages to a topic and consumers of data would read those messages from the same topic. This also modularizes our system so that it is easy to add new producers and consumers as we need them.</p>
-          <div class="image"><img src="https://i.imgur.com/uUTKpCy.png" alt="diagram 4"></div>
-          <p>By switching to a queue, we were able to simplify the API for Chronos. Instead of writing coupling code which massaged the data in a particular way, we took any received data and put it into a topic to be consumed later on as needed.</p>
+          <h2 id="server-infrastructure">Server Infrastructure</h2>
+          <p>Once the data reaches the server, our first design was to iterate over the buffer of events and append the metadata object to each of them and then to write them directly to the database. However, for the reasons detailed above, we decided to utilize a messaging queue in order to modularize our system. By doing this, we were able to simplify our API code so that all received data was send to a topic to be consumed later on.</p>
           <div class="code-block">
             <pre>
               <code class="language-javascript">
@@ -386,13 +491,13 @@
             </pre>
           </div>
           <h3 id="which-queue-to-choose">Which Queue to Choose</h3>
-          <p>The next question that faced us was which messaging queue to use. The two choices that were immediately apparent to us were RabbitMQ and Apache Kafka. While Apache Kafka had an uncontested higher throughput (20,000mps vs 100,000mps), RabbitMQ would be far easier to learn and implement than Kafka, and since we were dealing with greenfield applications we may be okay with the smaller throughput.</p>
+          <p>The two choices for a messaging queue that were immediately apparent to us were RabbitMQ and Apache Kafka. While Apache Kafka had an uncontested higher throughput (20,000mps vs 100,000mps), RabbitMQ is generally regarded as having an easier learning curve than Kafka, and since we were dealing with greenfield applications we may be okay with the smaller throughput.</p>
           <p>However, there were two drawbacks with using RabbitMQ. First, the AMQP protocol that RabbitMQ is built upon cannot guarantee the ordering of messages received by a consumer. This is because if a consumer goes down while the queue is trying to send it a message, it will try the message again later on, but other messages in the queue may be sent before retrying the failed message.</p>
-          <p>(picture)</p>
-          <p>This wasn&#39;t an immediate concern for us since in our analytics situation the order of events isn&#39;t of paramount concern. Though a discussion of how we stored event data takes place below, essentially Chronos stores all of the raw event data in one database while sending it to another to perform aggregated views for real-time feedback. Since the aggregations were commutative in nature, the ordering of the received messages didn&#39;t have to be exact.</p>
+          <div class="image no-bg no-shadow"><img src="images/diagrams/consumers.png" alt="Consumers reading from Kafka brokers" /></div>
+          <p>This wasn&#39;t an immediate concern for us since in our infrastructure the order of events isn&#39;t of paramount concern.</p>
           <p>That said, what was a major concern for us was the fact that RabbitMQ doesn&#39;t support data retention: once a message has been read by the consumer and an acknowledgement has been received, it is removed from the queue. This means if we ever wanted to add a new consumer to read data from our topic we would have to create some kind of worker to move data from that topic that now resides elsewhere to the new piece of architecture.</p>
           <p>Since Chronos is a framework, we wanted it to be relatively easy for a developer to add a new data sink to send data to. By using Kafka, all the developer would have to do is set up a new consumer and then subscribe to the topic. Though it would be harder for us to implement, by choosing Kafka we could guarantee this ease of flexibility since Kafka holds on to any data sent to it (albeit for a specified limited time) and allows for it to be replayed.</p>
-          <p>(Image)</p>
+          <div class="image no-bg no-shadow"><img src="images/diagrams/durability.png" alt="Kafka's message durability allows for replaying messages" /></div>
           <h2 id="apache-kafka">Apache Kafka</h2>
           <p>Though we described Kafka as a messaging queue earlier, it could more aptly be described as an append-only log where messages written to a topic are append to those before it and retained for a set period of time. It's this data retention that allows for messages to be replayed by consumers that allows for Kafka to have exactly-once message guarantees. This means that data sent to Kafka is treated as immutable.</p>
           <p>As mentioned above, Kafka uses a Pub/Sub architecture where producers write data to topics and consumers read data from them. Topics themselves are split into one or more partitions that can be split across a number of Kafka Brokers (server). Message ordering is only guaranteed within a partition, and not across, so if messaging order is paramount all data must pass through a single partition.</p>
@@ -400,11 +505,11 @@
           <p>Partitions themselves (and <i>not</i> topics) live on Kafka Brokers, each of which have their own id. Multiple brokers that communicate with each other are referred to as a &quot;cluster,&quot; and the partitions themselves are assigned automatically to the brokers. The brokers are able to communicate with one another via Apache Zookeeper (which also manages the brokers in a cluster in general).</p>
           <p>As stated previously, producers write data to a topic. By default, they will write the data in a round-robin fashion to the partitions, but you may also specify a key which will be hashed in order to determine which partition to write to. Likewise, consumers read data from a particular topic, more specifically in order starting from an offset within a partition. Consumers automatically &quot;know&quot; which broker to read the data from and will commit their offsets after reading data, which allows a consumer that goes down to pick back up where it left off once it recovers. Both producers and consumers automatically recover and adapt to brokers going up and down, which increases the availability of the overall system.</p>
           <p>In the case of Chronos, we have a single <code>events</code> topic which is across 3 brokers. We chose 3 brokers to increase availability since we can support up to N - 1 brokers going down. This way, if one broker is taken offline for any kind of management, and another one unexpectedly crashes, we still have one broker remaining to push the data to. Since message ordering wasn&#39;t a concern, we split the topic into 6 partitions (2 per broker) in order to increase parallelism and thus throughput. There is a <code>chronos</code> consumer group that contains 6 consumers, one for each partition, that reads the data and then writes it to the databases.</p>
-          <p>(image)</p>
+          <div class="image no-bg no-shadow"><img src="images/diagrams/consumer_group.png" alt="Consumers reading from the 'events' topic in a consumer group" /></div>
           <p>While Kafka helped to decouple our system and make it a streaming system at its core, it did introduce some new problems. Firstly, Kafka can be difficult to set up and configure, and we wanted to abstract and standardize that process away from the developer so that the host OS for deployment wasn&#39;t a concern. Secondly, Kafka does require monitoring and management, and we didn&#39;t want the developer to be bogged down managing Kafka as opposed to working on the core of the application at hand.</p>
           <h2 id="docker">Docker</h2>
-          <p>We decided to use Docker in order to configure and standardize our Kafka setup so as to make deployment as painless as possible for the developer. By utilizing the isolating capabilities of containers, we can deploy our Zookeeper and Kafka Cluster setup on various environments and so not limit the developer to whatever OS we built Chronos in.</p>
-          <p>We decided to use Confluent&#39;s Kafka images simply because a) the Confluent team keeps their images up to date since they are essentially the creators of Kafka, and b) they provide robust documentation and tutorials for using Kafka in Docker. We orchestrate the setup of our containers by using Docker Compose and linking our 3 brokers to our Zookeeper container. We use volumes to persist both the Zookeeper logs as well as the data for Zookeeper and all 3 brokers.</p>
+          <p>We use Docker in order to configure and standardize our Kafka setup so as to make deployment as painless as possible for the developer. By utilizing the isolating capabilities of containers, we can deploy our Zookeeper and Kafka Cluster setup on various environments and so not limit the developer to whatever OS we built Chronos in.</p>
+          <p>We use Confluent&#39;s Kafka images because a) the Confluent team keeps their images up to date since they are the creators of Kafka, and b) they provide robust documentation and tutorials for using Kafka in Docker. We orchestrate the setup of our containers by using Docker Compose and linking our 3 brokers to our Zookeeper container. We use volumes to persist both the Zookeeper logs as well as the data for Zookeeper and all 3 brokers:</p>
           <div class="code-block">
             <pre>
               <code class="language-yaml">
@@ -463,6 +568,7 @@
                 </code>
               </pre>
           </div>
+          <p class="caption">Snippet from our <code>docker-compose.yml</code> file.</p>
           <h2 id="chronos-cli">Chronos CLI</h2>
           <p>While using Docker solved how we can deploy our cluster in various environments, it did introduce some new concerns. The first was one of run-time conditions: we cannot always guarantee the order in which our serivces boot up using Docker Compose, and this can lead to errors when the brokers attempt to connect to Zookeeper if Zookeeper isn&#39;t up and running first.</p>
           <p>A quick solution to this is to run the Zookeeper container in detached mode for 5-10 seconds before running the rest of the system:</p>
@@ -491,7 +597,7 @@ docker-compose stop
               </code>
             </pre>
           </div>
-          <p>In order to abstract this process, we created a CLI which wraps around the various <code>docker</code> and <code>docker-compose</code> commands and automatically deals with the race conditions. Thus, starting the system is done by running <code>chronos start</code>, and the elaborate Kafka installation above is now done by running <code>chronos install-kafka</code>. In total, the CLI supports the following commands:</p>
+          <p>In order to abstract these details away from the user, we created a CLI which wraps around the various <code>docker</code> and <code>docker-compose</code> commands and automatically deals with the race conditions. Thus, starting the system is done by running <code>chronos start</code>, and the elaborate Kafka installation above is now done by running <code>chronos install-kafka</code>. In total, the CLI supports the following commands:</p>
           <table>
             <thead>
               <tr>
@@ -524,38 +630,23 @@ docker-compose stop
                 <td><code>install-pipeline</code></td>
                 <td>Sets up the <code>chronos_pl</code> database used by PipelineDB</td>
               </tr>
+              <tr>
+                <td><code>help</code></td>
+                <td>Displays a manual page with a description of the various commands and the arguments they take</td>
+              </tr>
             </tbody>
           </table>
           <h2 id="storing-event-data">Storing Event Data</h2>
-          <p>Once the data goes through Kafka to the consumer, the consumer then writes the data to our databases. Thus, we had consider how we wanted to store event data given the following considerations:</p>
-          <ul>
-            <li>How can we store event data in a way that is efficient for a write heavy application?</li>
-            <li>How can we make data exploration easy for the developer?</li>
-            <li>How can we make it space effective?</li>
-          </ul>
-          <h3 id="to-sql-or-to-nosql-">To SQL, or to NoSQL?</h3>
-          <p>The first question we had to ask ourselves, &quot;how can we store data in a way that is efficient for a write heavy application,&quot; inevitably led us to the SQL vs NoSQL question. In our research we have generally found that streaming systems used for analytics utilize NoSQL. Reasons for this include:</p>
-          <ul>
-            <li>NoSQL performs better in write heavy applications</li>
-            <li>The schema of the event data doesn&#39;t have to be known in advance, which makes it more flexible</li>
-            <li>NoSQL is better at sharding than SQL</li>
-            <li>It is harder to scale SQL given the large number of events captured compared to NoSQL</li>
-          </ul>
-          <p>The typical scaling strategy when using NoSQL is to scale horizontally across a cluster of <em>N</em> servers where you have chopped the dataset into <em>N</em> partitions. This is especially useful when you are no longer able to scale vertically.</p>
-          <p>The chief difficulty for SQL is that since you are storing data for each action taken by a user, the eventual dataset in the database will be massive, so much so that it cannot reside just in memory and thus must persist on the disk as well. This also means that the indexes must reside on the disk as well, and thus any time we will need to update the data structure of our indexes, there will be quite a bit of disk I/O, which degrades performance.</p>
-          <p>One possible work-around for this is to “use smaller- or variable-sized pages.”[4] However, by doing this you will both increase disk fragmentation, as well as increase “the overhead of the ‘seek time’” “in the case of a spinning hard disk.” While you can get rid of a physical seek time by using an SSD, “they [SSDs] can only be read from or written to at the page-level granularity [8KB]” which means that even for an update less than that granularity, the SSD has to read from the disk to the buffer cache, perform any modifications, and then write to a new disk block (which will be 8KB). All this ultimately means that as we insert more data into a table, both the insert throughput will suffer and the variance in insert rate will go up drastically.</p>
-          <p>This shouldn’t come as a surprise; since we (usually) do not want to delete raw time-scale data, that means that the primary writes in a time-scale database are inserts instead of updates, which is more common in an OLTP database. NoSQL databases’ use of Log-structured merge (LSM) trees work are efficient for this problem as they “reduce the cost of making small writes by only performing larger append-only writes to disk” as opposed to in-place writes.</p>
-          <p>However, there are certain tradeoffs for choosing NoSQL over SQL, namely that there are higher memory requirements and poor support for secondary indexes. The former problem arises from the fact that since there is “no global index” within LSM trees, “there is no single ordering.” Thus to look-up a value for a key requires a more complex operation: first you must check memory for the latest version of the key. If it’s not there, then you have to check any on-disk tables to find the latest value associated with the key. While we can keep all indexes in memory to avoid this excessive disk I/O, that choice will increase our memory requirements.</p>
-          <p>As for the latter problem, this arises because since there is no “global sorted order” in LSM trees, they don’t “naturally support secondary indexes.” Systems try to emulate secondary indexes in a variety of ways, but it ultimately ends up “with the cost of requiring a larger scan among these keys at query time, thus supporting only items with a limited cardinality (e.g., discrete values, not numeric ones).”</p>
-          <p>Given the above problems, when we began this project we were still set on using a NoSQL database given the problems listed above. However, one appealing aspect of using a SQL database is ease of use: SQL is a powerful declarative language that, even according to Keen IO, is still the bar none when it comes to exploring data. Further, it is still more likely to be known by a variety of developers as opposed to the various querying languages found in NoSQL databases.[CITE] These benefits are right in line with our use case since we wanted to store our data for data exploration, and we want to appeal to as wide a developer audience as we can. However, it was only upon finding SQL databases designed for event data that we finally decided upon using SQL, more specifically TimescaleDB and PipelineDB.</p>
+          <p>Once the data goes through Kafka to the consumer, the consumer then writes the data to our database layer. Given the previous discussion between various data stores, we were originally set on using NoSQL due to SQL's difficulties in storing event data. However, we were really reluctant to give up SQL as our data exploration language. In addition to this, SQL is still more well known by a variety of developers as opposed to the various querying languages found in NoSQL databases.[5] These benefits are right in line with our use case since we wanted to store our data for data exploration, and we want to appeal to as wide a developer audience as we can. As such, instead of settling on a NoSQL database we instead used two SQL databases that were designed for capturing event data, more specifically TimescaleDB and PipelineDB.</p>
           <h3 id="timescaledb">TimescaleDB</h3>
-          <p>TimescaleDB is a PostgresSQL extension that works out-of-the-box with the plugins and features developed by the Postgres community over the years. Timescale realized that when working with time-series data, “if the data [was] sorted by time, we would always be writing towards the ‘end’ of our dataset.” Thus we could keep the “actual working set of database pages rather small” and stash them in memory, and cache data for queries for recent intervals.</p>
-          <p>To overcome the problems above in using a SQL database for time-series data, Timescale used a chunking strategy where they split data into distinct tables via two dimensions: a time interval and a primary key. These individual chunks are then stored in separate tables which greatly reduces the size of indexes as they are only built across the smaller chunks rather than  a single giant table. This also means that properly sized chunks along with their B-trees can be stored entirely in memory which avoids the “swap-to-disk problem, while maintaining support for multiple indexes.” Once the chunks are partitioned by time, they can then be partitioned again by a primary key which leads to even smaller chunks that share a “time interval but are disjoint in terms of their primary key-space,” which is better for parallelization.</p>
-          <p>The current design of chunks is that they are created with a fixed time interval that then adapts “based on changes in data volumes in order to hit maximum target sizes.” This avoids the problem where data that arrives too early in the interval creates extended intervals (which are overly large), and also supports a more natural data drop interval (e.g., drop any data which is 15 days or older). Since the chunks are just database tables as opposed to tuples, when data is dropped it “avoids fragmentation…[and] the need for vacuuming.”</p>
+          <p>TimescaleDB is a PostgresSQL extension that works out-of-the-box with the plugins and features developed by the Postgres community over the years. Timescale realized that when working with time-series data, “if the data [was] sorted by time, we would always be writing towards the ‘end’ of our dataset.”[4] Thus we could keep the “actual working set of database pages rather small” and stash them in memory, and cache data for queries for recent intervals.</p>
+          <p>To overcome the problems above in using a SQL database for time-series data, Timescale used a chunking strategy where it splits data into distinct tables via two dimensions: a time interval and a primary key. These individual chunks are then stored in separate tables which greatly reduces the size of indexes as they are only built across the smaller chunks rather than  a single giant table. This also means that properly sized chunks along with their B-trees can be stored entirely in memory which avoids the “swap-to-disk problem, while maintaining support for multiple indexes.”[4] Once the chunks are partitioned by time, they can then be partitioned again by a primary key which leads to even smaller chunks that share a “time interval but are disjoint in terms of their primary key-space,” which is better for parallelization.</p>
           <p>In Chronos we use TimescaleDB to store all of our raw event data for data exploration purposes. By doing this we allow developers to use the power of SQL for data exploration without having to sacrifice the performance degradation one typically sees with SQL databases when dealing with event data. However, there are two current problems Chronos faces when using TimescaleDB:
-          1) TimescaleDB currently has no horizontal scaling capabilities (i.e. sharding), which limits it to a single node. This isn&#39;t as immediate of a concern for Chronos since the system is built for greenfield applications where scaling isn&#39;t as immediate a concern. However, Timescale will begin running out sharding in 2019, so this will no longer be a problem.
-          2) TimescaleDB maxes out on its performance capabilities between 50-100TB of data. Any more will lead to degradation. Since Chronos can collect a large amount of data relatively quickly, especially if a greenfield application begins to rise in popularity, this is a concern. In future iterations, Chronos plans to implement a cold storage system that will move data from TimescaleDB that is older than a month old (see &quot;Future Plans&quot; below).</p>
-          <p>Each event type was stored in its own table where the various attributes of the event are stored in their own column. Initially we were undecided as to whether we should store the metadata in its own table, or store it as a JSON object into a JSONB column. Since storage efficiency is a concern for Chronos, we decided to see how the size would look if the metadata was stored in its own table as well as in a column. We set up tables to store link clicks in both fashions, as well as a metadata table.</p>
+          <ol>
+            <li>TimescaleDB as of this writing has no horizontal scaling capabilities (i.e. sharding), which limits it to a single node. This isn&#39;t as immediate of a concern for Chronos since the system is built for greenfield applications where scaling isn&#39;t as immediate a concern. However, Timescale plan to finish implementing sharding in 2019, so this will no longer be a problem</li>
+            <li>TimescaleDB maxes out on its performance capabilities between 50-100TB of data. Any more will lead to degradation. Since Chronos can collect a large amount of data relatively quickly, especially if a greenfield application begins to rise in popularity, this is a concern. In future iterations, Chronos plans to implement a cold storage system that will move data from TimescaleDB that is older than a month old (see &quot;Future Plans&quot; below)</li>
+          </ol>
+          <p>Each event type is stored in its own table where the various attributes of the event are stored in their own column. Initially we were undecided as to whether we should store the metadata in its own table, or store it as a JSON object into a <code>JSONB</code> column. Since storage efficiency is a concern for Chronos, we decided to see how the size would look if the metadata was stored in its own table as well as in a column. We set up tables to store link clicks in both fashions, as well as a metadata table.</p>
           <p><code>link_clicks</code> table (with <code>metadata</code> column):</p>
           <table>
             <thead>
@@ -670,24 +761,24 @@ docker-compose stop
             </tbody>
           </table>
           <p><i>*<code>EVENT</code> is a TYPE that contains a list of all event types</i></p>
-          <p>We then inserted 50 rows of data in each table and used TimescaleDB’s <code>hypertable_relation_size()</code> function on each of them. What we found was that each table’s bite size (excluding indexes and TOAST) was 49,152 bytes. This means by storing the JSON in a <code>metadata</code> column, we effectively halve the storage space. Since Chronos is trying to be as storage efficient as possible, this was a very good trade off. While this does make querying the metadata slightly harder, we felt this was okay given the storage benefits.</p>
-          <p>With TimescaleDB, Chronos now provides an easy way for developers to explore their data to find interesting trends. However, if a developer wants to see the same query at various times, the query would have to be executed manually for each window of duration. What we wanted Chronos to do was provide real-time feedback for any queries that the developer specifies so that the querying process is &quot;automated&quot;. For this, we use our second time-series database: PipelineDB.</p>
+          <p>We then inserted 50 rows of data in each table and used TimescaleDB’s <code>hypertable_relation_size()</code> function on each of them. What we found was that each table’s bite size (excluding indexes and TOAST) was 49,152 bytes. This means by storing the JSON in a <code>metadata</code> column, we effectively halve the storage space. While this does make querying the metadata slightly harder, we felt this was a good tradeoff given the storage benefits.</p>
+          <p>By using TimescaleDB, Chronos now provides an easy way for developers to explore their data to find interesting trends. However, if a developer wants to see the same query at various times, the query would have to be executed manually for each window of duration. What we wanted Chronos to do was provide real-time feedback for any queries that the developer specifies so that the querying process is &quot;automated&quot;. For this, we use our second time-series database: PipelineDB.</p>
           <h3 id="pipelinedb">PipelineDB</h3>
-          <p>PipelineDB is an open-source PostgreSQL extension that processes event data in real time and was designed for analytics. In the common scenario, raw data is usually stored in databases and then being aggregated over and over again when needed.  Unlike entity data that is always being updated event data is immutable and is always being appended. Therefore storing indefinite amounts of raw data can very soon pose a scaling problem. In the same time aggregating large datasets in real-time makes read queries very inefficient.</p>
-          <p>PipelineDB doesn&#39;t store the event data. Instead it runs continuous aggreagtions over streaming event data, and only stores the summaries of those aggregations. After the data is aggregated it is discarded.</p>
-          <p>To better understand how it&#39;s done by PipelineDB we have to introduce its two fundamental abstractions: Streams and Continuous Views.</p>
-          <p>Streams in PipelineDB look like regular tables and a row in a stream looks like a table row and represents one event. But unlike regular tables streams do not store the data. Instead they are serving as the data sources to read from by Continuous views.</p>
+          <p>PipelineDB is an open-source PostgreSQL extension that processes event data in real time and was designed for analytics. In the most common scenario, raw data is usually stored in databases and then aggregated over and over again when needed.  Unlike entity data that is always being updated, event data is immutable and is always being appended. Therefore storing indefinite amounts of raw data can very soon pose a scaling problem. At the same time, aggregating large datasets in real-time makes read queries very inefficient.</p>
+          <p>PipelineDB doesn&#39;t store the event data. Instead it runs continuous aggreagtions over streaming event data, and only stores the summaries of those aggregations. After the raw event data is used and aggregated, it is discarded.</p>
+          <p>To better understand how PipelineDB works, we have to introduce its two fundamental abstractions: Streams and Continuous Views.</p>
+          <p>Streams in PipelineDB look like regular tables and a row in a stream looks like a table row and represents one event. But unlike regular tables, streams do not store the data. Instead, they serve as the data source to be read by Continuous Views.</p>
           <p>When each event arrives at the stream, it is given a small bitmap that represents a list of all continuous views that need to read the event.</p>
-          <div class="image no-bg"><img src="https://i.imgur.com/948w1Gz.png" alt=""></div>
+          <div class="image no-bg no-shadow"><img src="images/diagrams/pipeline_01.png" alt="In PipelineDB, new events are given a bitmap" /></div>
           <p>When a continuous view is done reading an event, it flips a single bit in the bitmap.</p>
-          <div class="image no-bg"><img src="https://i.imgur.com/5AqnN9h.png" alt=""></div>
+          <div class="image no-bg no-shadow"><img src="images/diagrams/pipeline_02.png" alt="Flipping a bit" /></div>
           <p>When all of the bits in the bitmap are set to 1, the event is discarded and can never be accessed again.</p>
-          <p>Once the data is consumed by the views it is being discarded.</p>
+          <p>Once the data is consumed by the views it is discarded.</p>
           <p>Continuous views in PipelineDB are basically PostgreSQL materialized views. A continuous view has a predefined query that is being run continuously on a stream or a combination of streams and tables. As new data arrives to the stream it&#39;s read by the views and is incrementally updated. The view only stores the updated summary.</p>
-          <p>In Chronos we used PipelineDB for use cases when there is a need for real-time summary data (unique users per page, total users submitting the form, etc) or analytics and the queries are known in advance.</p>
-          <p>Also PipelineDB being PostgreSQL extension allows users to use familiar SQL syntax and not to worry about scaling or perfomance issues by using classic PostgreSQL.</p>
+          <p>In Chronos we used PipelineDB for use cases when there is a need for real-time summary data (unique users per page, total users submitting the form, etc) or analytics where the queries are known in advance.</p>
+          <p>Also PipelineDB, being a PostreSQL extension, allows users to use familiar SQL syntax and deal with performance issues using tried and true SQL tuning techniques.</p>
           <h4 id="pipelinedb-streams-in-chronos">PipelineDB Streams in Chronos</h4>
-          <p>Currently, Chronos automatically creates a PipelineDB stream for each event that it tracks.</p>
+          <p>Currently, Chronos automatically creates a PipelineDB stream for each event type that it tracks.</p>
           <div class="code-block">
             <pre>
               <code class="language-sql">
@@ -703,8 +794,8 @@ SERVER pipelinedb;
           </div>
 
           <p>The data in the stream cannot be queried directly, but it is possible to look up what attributes a particular stream has. The attributes of a stream correspond to the attributes of the event type defined in the tracker (just like in our TimescaleDB tables).</p>
-          <p>By default, PipelineDB timestamps the events upon arrival and adds an additional attribute called <code>arrival_timestamp</code> containing that timestamp for each event. However, for real-time analytics it&#39;s important to aggreagate events using the timestamp of when those events happen (i.e. event time). Using the arrival timestamp of the event might not reflect the correct state of application in the specific point in time. Even though we do include a <code>client_time</code> attribute which records the event time, PipelineDB&#39;s sliding windows are based upon the <code>arrival_timestamp</code> attribute and thus only window upon processing time.</p>
-          <p>When a user event is generated in the application the tracker records an event type, a timestamp and state attributes describing the event. For analytics it&#39;s very important to capture as much data characteristics as possible. Additionally to the mentioned above attributes the tracker also records page metadata for each event.</p>
+          <p>By default, PipelineDB timestamps the events upon arrival and adds an additional attribute called an <code>arrival_timestamp</code>. However, for real-time analytics it&#39;s important to aggreagate events using the timestamp of when those events happen (i.e. event time). Using the arrival timestamp of the event might not reflect the correct state of application in the specific point in time. Even though we do include a <code>client_time</code> attribute which records the event time, PipelineDB&#39;s sliding windows are based upon the <code>arrival_timestamp</code> attribute and thus only window upon processing time.</p>
+          <p>When a user event is generated in the application, the tracker records an event type, a timestamp, state attributes describing the event, as well as any page metadata associated with it. For analytics it&#39;s very important to capture as much data characteristics as possible.</p>
           <p>Our research showed that event metadata is not aggregated too often or not at all. But for unforseen use cases there might be a need for it in the future. So instead of defining multiple  attributes in a stream for page metadata object we only defined one as a PostgreSQL <code>JSONB</code> type.</p>
           <h4 id="pipelinedb-views-in-chronos">PipelineDB Views in Chronos</h4>
           <p>For each stream in PipelineDB, Chronos also automatically creates the views for real-time data aggregation.</p>
@@ -721,19 +812,38 @@ SELECT</span>
             </pre>
           </div>
           <p>A view is described by the PostgreSQL <code>SELECT</code> query that specifies what type of aggregation will be performed on stream data. Every time the event arrives in a stream the query is run and the new result is stored in the view table.</p>
-          <div class="image no-bg"><img src="https://i.imgur.com/TpgTorN.png" alt=""></div>
+          <div class="image no-bg no-shadow"><img src="images/diagrams/pipeline_03.png" alt="Views reading from Streams" /></div>
           <p>Since continuous views are a lot like regular views, when we need to retrieve the results from them we can just run <code>SELECT</code> on specific view:</p>
           <div class="code-block">
             <pre>
               <code class="language-sql"><span class="hl-purple">SELECT</span> link_text <span class="hl-purple">AS FROM</span> link_text_count;</code>
             </pre>
           </div>
-          <div class="image no-bg"><img src="https://i.imgur.com/4PgyvHO.png" alt=""></div>
+          <table>
+            <thead>
+              <tr>
+                <th>link_text</th>
+                <th>count</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>"Like"</td>
+                <td class="table-number">3</td>
+              </tr>
+              <tr>
+                <td>"Sign Up"</td>
+                <td class="table-number">5</td>
+              </tr>
+              <tr>
+                <td>"Sign In"</td>
+                <td class="table-number">0</td>
+              </tr>
+            </tbody>
+          </table>
           <p>We can use any <code>SELECT</code> statement to further analyze data in the continuous view.</p>
-          <p>/...</p>
-
           <h2 id="grafana">Grafana</h2>
-          <p>To give more power to a developer&#39;s data exploration, Chronos uses Grafana to visualize queries in each of our databases. Though the developer has to manually link Grafana to each of the databases via Grafana&#39;s GUI, the process of doing so is quite easy (and we explain how to do so in <a href="https://github.com/chronos-project/chronos-pipeline">our repository&#39;s</a> <code>README</code> file. Once done, a developer can use either Grafana&#39;s query builder (GUI) or SQL to query the databases in order to visualize the data.</p>
+          <p>To give more power to a developer&#39;s data exploration, Chronos uses Grafana to visualize queries in each of our databases. Though the developer has to manually link Grafana to each of the databases via Grafana&#39;s GUI, the process of doing so is quite easy (and we explain how to do so in <a href="https://github.com/chronos-project/chronos-pipeline">our repository&#39;s</a> <code>README</code> file). Once done, a developer can use either Grafana&#39;s query builder (GUI) or SQL to query the databases in order to visualize the data.</p>
           <div id="grafana-ts" class="image"><img src="https://i.imgur.com/3cgXOX6.png" alt="grafana-TS"></div>
           <p class="caption">Example of <code>pageviews</code> from a particular user over an hour</p>
           <h2 id="future-plans">Future Plans</h2>
@@ -748,14 +858,14 @@ SELECT</span>
           <h3 id="implement-automatic-kafka-management">Implement Automatic Kafka Management</h3>
           <p>While the Chronos CLI makes it easy to reboot individual Kafka containers, we would like to have a more automated process that responds to errors as they occur and takes the necessary steps to fix the issues as well as report any details to the developer. This would go a long way in the difficulties of managing Kafka for the developer and allow attention to be focused on the application and not Chronos.</p>
           <h2 id="about-us">About Us</h2>
-          <p>The team behind Chronos consists of two full-stack software engineers who collaborated remotely within the united states. Please feel free to reach out <a href="team.html">to us</a> with any questions about Chronos or if you&#39;d like to just discuss any of the topics covered here!</p>
+          <p>The team behind Chronos consists of two full-stack software engineers who collaborated remotely within the united states: <a href="https://ncalibey.github.io" target="_blank">Nick Calibey</a> and <a href="https://sashaprodan.github.io/" target="_blank">Alexandra Prodan</a>. Please feel free to reach out <a href="team.html">to us</a> with any questions about Chronos or if you&#39;d like to just discuss any of the topics covered here!</p>
           <h2 id="references">References</h2>
           <p>Please head over to our <a href="chronos-project.github.io/bibliography">Bibliography</a> for a complete listing of resources we used to research and build Chronos.</p>
-          <p>[1] Keen IO, <i>Build vs. Buy Gets Easier with APIs: A CTO&#39;s Guide to Getting Data Strategy Right</i>, 3.</p>
-          <p>[2] Michelle Wetzler, <a href="https://blog.keen.io/event-data-vs-entity-data-how-to-store-user-properties-in-keen-io/" target="_blank">“Event Data vs Entity Data — How to store user properties in Keen IO,”</a> accessed 10/20/18. Keen developed this model from certain distinctions made by Ben Johnson in his talk <a href="https://speakerdeck.com/benbjohnson/behavioral-databases" target="_blank">“Behavioral Databases: Next Generation NoSQL Analytics.”</a> See also Taylor Barnett, <a href="https://www.youtube.com/watch?v=tBLWw-C3OdM" target="_blank">“(Event) Data is Everywhere,”</a> accessed 10/20/18.</p>
+          <p>[1] Keen IO, <i><a href="https://learn.keen.io/build-vs-buy" target="_blank">Build vs. Buy Gets Easier with APIs: A CTO&#39;s Guide to Getting Data Strategy Right</a></i>, 3.</p>
+          <p>[2] Michelle Wetzler, <a href="https://blog.keen.io/event-data-vs-entity-data-how-to-store-user-properties-in-keen-io/" target="_blank">“Event Data vs Entity Data — How to store user properties in Keen IO,”</a>. Keen developed this model from certain distinctions made by Ben Johnson in his talk <a href="https://speakerdeck.com/benbjohnson/behavioral-databases" target="_blank">“Behavioral Databases: Next Generation NoSQL Analytics.”</a> See also Taylor Barnett, <a href="https://www.youtube.com/watch?v=tBLWw-C3OdM" target="_blank">“(Event) Data is Everywhere,”</a>.</p>
           <p>[3] Tyler Akidau, Slava Chernyak, &amp; Reuven Lax, <i><a href="http://streamingsystems.net/" target="_blank">Streaming Systems: The What, Where, When, and How of Large-Scale Data Processing</a></i> (Sebastopol, CA: O&#39;Reilly Media, 2018).</p>
-          <p>[4] Much of the following comes from</p>
-
+          <p>[4] Mike Freedman, <a href="https://blog.timescale.com/time-series-data-why-and-how-to-use-a-relational-database-instead-of-nosql-d0cd6975e87c" target="_blank">"Time-series data: Why (and how) to use a relational database instead of NoSQL,"</a>.</p>
+          <p>[5] Jordan Baker, <a href="https://dzone.com/articles/dzone-research-sql-or-nosql-that-is-the-question">"SQL or NoSQL, That Is the Question"</a>.</p>
         </div>
       </article>
     </main>
