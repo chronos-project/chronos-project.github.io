@@ -312,6 +312,7 @@ footer {
   background: #36373B;
   color: #FEFEFE;
   text-align: center;
+  position: relative;
 }
 
 footer p:first-of-type {
@@ -325,7 +326,28 @@ footer p:last-of-type {
   padding-bottom: 40px;
 }
 
+small {
+  font-family: 'Cabin', Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  position: absolute;
+  right: 50px;
+  bottom: 30px;
+  color: #EBEDEC;
+}
+
+small a { text-decoration: underline; }
+small a:hover,
+.email:hover { color: #FFF; }
+
 /* ==== Media Queries ==== */
+@media screen and (max-width: 1050px) {
+  small {
+    position: static;
+    display: block;
+    padding-bottom: 15px;
+  }
+}
+
 @media screen and (max-width: 1001px) {
   #toc li.h2 {
     margin-left: 40px;
